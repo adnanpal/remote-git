@@ -7,6 +7,7 @@ import type {
 
 export function connectToRelay(
   deviceId: string,
+  pairingToken: string,
   machine: AgentRegisterMessage["machine"]
 ) {
   const socket = new WebSocket("ws://localhost:8080");
@@ -17,6 +18,7 @@ export function connectToRelay(
     const message: AgentRegisterMessage = {
       type: "agent.register",
       deviceId,
+      pairingToken,
       machine,
     };
 

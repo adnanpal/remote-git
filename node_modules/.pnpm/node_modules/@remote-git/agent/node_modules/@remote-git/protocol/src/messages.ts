@@ -2,6 +2,7 @@ export type AgentRegisterMessage = {
 
     type: "agent.register";
     deviceId: string;
+    pairingToken: string;
 
     machine: {
         hostname: string;
@@ -20,6 +21,21 @@ export type PairingInfo = {
   relay: string;
 };
 
+export type PhonePairMessage = {
+    type: "phone.pair";
+    deviceId: string;
+    pairingToken: string;
+};
+
+export type PairSuccessMessage = {
+    type: "pair.success";
+    deviceId: string;
+};
+
+export type PairFailedMessage = {
+    type: "pair.failed";
+    reason: string;
+}
 export type PingMessage = {
     type: "ping";
 };
@@ -31,4 +47,7 @@ export type PongMessage = {
 export type Message =
   | AgentRegisterMessage
   | PingMessage
-  | PongMessage;
+  | PongMessage
+  | PhonePairMessage
+  | PairSuccessMessage
+  | PairFailedMessage;

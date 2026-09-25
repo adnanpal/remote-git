@@ -24,7 +24,7 @@ wss.on("connection", (socket) => {
 
         deviceId = message.deviceId;
 
-        registerConnection(message.deviceId,socket);
+        registerConnection(message.deviceId,socket,message.pairingToken);
 
         console.log("\n💻 Laptop registered");
         console.log(`Device ID: ${message.deviceId}`);

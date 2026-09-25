@@ -59,4 +59,4 @@ console.log(`Free RAM: ${machine.freeMemory} GB`);
 
 console.log("\n🌐 Connecting to relay...");
 
-connectToRelay(deviceId,machine);
+connectToRelay(deviceId,pairingToken,machine);
