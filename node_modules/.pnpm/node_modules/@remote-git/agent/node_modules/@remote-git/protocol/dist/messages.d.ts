@@ -11,6 +11,12 @@ export type AgentRegisterMessage = {
         freeMemory: number;
     };
 };
+export type PairingInfo = {
+    version: 1;
+    deviceId: string;
+    pairingToken: string;
+    relay: string;
+};
 export type PingMessage = {
     type: "ping";
 };

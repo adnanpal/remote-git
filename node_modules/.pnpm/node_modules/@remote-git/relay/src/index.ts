@@ -1,6 +1,7 @@
 import { WebSocketServer } from "ws";
 import { registerConnection, removeConnection } from "./connections.js";
 
+
 const PORT = 8080;
 
 const wss = new WebSocketServer({
