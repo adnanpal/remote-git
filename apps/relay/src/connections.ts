@@ -3,6 +3,7 @@ import type WebSocket from "ws";
 type DeviceConnection = {
   socket: WebSocket;
   pairingToken: string;
+  phone?: WebSocket;
 };
 
 const connections = new Map<string, DeviceConnection>();
@@ -24,12 +25,6 @@ export function getConnection(deviceId: string) {
   return connections.get(deviceId);
 }
 
-export function removeConnection(deviceId: string) {
-  connections.delete(deviceId);
-
-  console.log(`❌ Removed connection: ${deviceId}`);
-}
-
 export function validatePairingToken(
   deviceId: string,
   pairingToken: string
@@ -41,4 +36,29 @@ export function validatePairingToken(
   }
 
   return connection.pairingToken === pairingToken;
+}
+
+export function attachPhone(
+  deviceId: string,
+  phoneSocket: WebSocket
+) {
+  const connection = connections.get(deviceId);
+
+  if (!connection) {
+    return false;
+  }
+
+  connection.phone = phoneSocket;
+
+  return true;
+}
+
+export function getPhoneConnection(deviceId: string) {
+  return connections.get(deviceId)?.phone;
+}
+
+export function removeConnection(deviceId: string) {
+  connections.delete(deviceId);
+
+  console.log(`❌ Removed connection: ${deviceId}`);
 }

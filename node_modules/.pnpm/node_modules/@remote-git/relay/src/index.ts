@@ -1,56 +1,136 @@
 import { WebSocketServer } from "ws";
-import { registerConnection, removeConnection } from "./connections.js";
+import { registerConnection, removeConnection, getConnection, validatePairingToken, attachPhone } from "./connections.js";
 
 
 const PORT = 8080;
 
 const wss = new WebSocketServer({
-  port: PORT,
+    port: PORT,
 });
 
 wss.on("connection", (socket) => {
-  console.log("🔗 A device connected");
+    console.log("🔗 A device connected");
 
-  let deviceId: string | undefined;
+    let deviceId: string | undefined;
 
-  socket.on("message", (data) => {
-    try {
-      const message = JSON.parse(data.toString());
+    socket.on("message", (data) => {
+        try {
+            const message = JSON.parse(data.toString());
 
-      console.log("📨 Received:", message);
+            console.log("📨 Received:", message);
 
 
-      if (message.type === "agent.register") {
+            if (message.type === "agent.register") {
 
-        deviceId = message.deviceId;
+                deviceId = message.deviceId;
 
-        registerConnection(message.deviceId,socket,message.pairingToken);
+                registerConnection(message.deviceId, socket, message.pairingToken);
 
-        console.log("\n💻 Laptop registered");
-        console.log(`Device ID: ${message.deviceId}`);
-        console.log(`Hostname: ${message.machine.hostname}`);
-        console.log(`OS: ${message.machine.platform}`);
-        console.log(`CPU: ${message.machine.cpu}`);
-        console.log(`RAM: ${message.machine.totalMemory} GB`);
+                console.log("\n💻 Laptop registered");
+                console.log(`Device ID: ${message.deviceId}`);
+                console.log(`Hostname: ${message.machine.hostname}`);
+                console.log(`OS: ${message.machine.platform}`);
+                console.log(`CPU: ${message.machine.cpu}`);
+                console.log(`RAM: ${message.machine.totalMemory} GB`);
 
-        socket.send(
-          JSON.stringify({
-            type: "agent.registered",
-            deviceId,
-          })
-        );
-      }
-    } catch (error) {
-      console.error("Invalid message received");
-    }
-  });
+                socket.send(
+                    JSON.stringify({
+                        type: "agent.registered",
+                        deviceId,
+                    })
+                );
+            }
 
-  socket.on("close", () => {
-    if(deviceId){
-        removeConnection(deviceId);
-    }
-    console.log("❌ Device disconnected");
-  });
+            if (message.type === "phone.pair") {
+                const isValid = validatePairingToken(
+                    message.deviceId,
+                    message.pairingToken
+                );
+
+                if (!isValid) {
+                    console.log("❌ Pairing failed");
+
+                    socket.send(
+                        JSON.stringify({
+                            type: "pair.failed",
+                            reason: "Invalid device ID or pairing token",
+                        })
+                    );
+
+                    return;
+                }
+
+                const connection = getConnection(message.deviceId);
+
+                if (!connection) {
+                    socket.send(
+                        JSON.stringify({
+                            type: "pair.failed",
+                            reason: "Device is offline",
+                        })
+                    );
+
+                    return;
+                }
+
+                const attached = attachPhone(
+                    message.deviceId,
+                    socket
+                );
+
+                if (!attached) {
+                    socket.send(
+                        JSON.stringify({
+                            type: "pair.failed",
+                            reason: "Could not create pairing session",
+                        })
+                    );
+
+                    return;
+                }
+
+                console.log(
+                    `📱 Phone paired with ${message.deviceId}`
+                );
+
+                socket.send(
+                    JSON.stringify({
+                        type: "pair.success",
+                        deviceId: message.deviceId,
+                    })
+                );
+
+                connection.socket.send(
+                    JSON.stringify({
+                        type: "phone.connected",
+                    })
+                );
+            }
+            if (message.type === "machine.info") {
+                if (!deviceId) {
+                    return;
+                }
+
+                const phone = getConnection(deviceId)?.phone;
+
+                if (!phone) {
+                    console.log("⚠️ No paired phone");
+                    return;
+                }
+
+                phone.send(JSON.stringify(message));
+            }
+        } catch (error) {
+            console.error("Invalid message received");
+        }
+    });
+
+    socket.on("close", () => {
+        if (deviceId) {
+            removeConnection(deviceId);
+        }
+        console.log("❌ Device disconnected");
+    });
 });
 
 console.log(`☁️ Remote Git Relay`);

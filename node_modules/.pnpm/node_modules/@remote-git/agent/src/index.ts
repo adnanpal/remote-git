@@ -19,7 +19,7 @@ const pairingInfo: PairingInfo = {
   version: 1,
   deviceId,
   pairingToken,
-  relay: "ws://localhost:8080",
+  relay: "ws://192.168.1.61:8080",
 };
 
 const qr = await generatePairingQR(pairingInfo);

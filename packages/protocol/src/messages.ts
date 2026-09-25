@@ -14,6 +14,14 @@ export type AgentRegisterMessage = {
         freeMemory: number;
     };
 };
+export type MachineInfoMessage = {
+  type: "machine.info";
+  machine: AgentRegisterMessage["machine"];
+};
+export type PhoneConnectedMessage = {
+  type: "phone.connected";
+};
+
 export type PairingInfo = {
   version: 1;
   deviceId: string;
@@ -50,4 +58,6 @@ export type Message =
   | PongMessage
   | PhonePairMessage
   | PairSuccessMessage
-  | PairFailedMessage;
+  | PairFailedMessage
+  | PhoneConnectedMessage
+  | MachineInfoMessage;

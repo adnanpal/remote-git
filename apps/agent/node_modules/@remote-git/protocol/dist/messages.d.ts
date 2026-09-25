@@ -12,6 +12,13 @@ export type AgentRegisterMessage = {
         freeMemory: number;
     };
 };
+export type MachineInfoMessage = {
+    type: "machine.info";
+    machine: AgentRegisterMessage["machine"];
+};
+export type PhoneConnectedMessage = {
+    type: "phone.connected";
+};
 export type PairingInfo = {
     version: 1;
     deviceId: string;
@@ -37,4 +44,4 @@ export type PingMessage = {
 export type PongMessage = {
     type: "pong";
 };
-export type Message = AgentRegisterMessage | PingMessage | PongMessage | PhonePairMessage | PairSuccessMessage | PairFailedMessage;
+export type Message = AgentRegisterMessage | PingMessage | PongMessage | PhonePairMessage | PairSuccessMessage | PairFailedMessage | PhoneConnectedMessage | MachineInfoMessage;
