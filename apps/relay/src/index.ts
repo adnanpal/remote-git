@@ -1,5 +1,5 @@
 import { WebSocketServer } from "ws";
-import { registerConnection, removeConnection, getConnection, validatePairingToken, attachPhone } from "./connections.js";
+import { registerConnection, removeConnection, getConnection, validatePairingToken, attachPhone, getConnectionBySocket, getConnectionByPhoneSocket } from "./connections.js";
 
 
 const PORT = 8080;
@@ -40,12 +40,66 @@ wss.on("connection", (socket) => {
                     })
                 );
             }
+            if (message.type === "git.repositories.request") {
+                const connection = getConnectionByPhoneSocket(socket);
+
+                if (!connection) {
+                    return;
+                }
+
+                connection.socket.send(
+                    JSON.stringify(message)
+                );
+
+                return;
+            }
+            if (message.type === "workspace.list.request") {
+                const connection = getConnectionByPhoneSocket(socket);
+
+                if (!connection) {
+                    console.log("❌ Phone connection not found");
+                    return;
+                }
+
+                connection.socket.send(JSON.stringify(message));
+
+                console.log("📂 Workspace request forwarded to agent");
+                return;
+            }
+
+            if (message.type === "git.repositories.response") {
+                const connection = getConnectionBySocket(socket);
+
+                if (!connection?.phone) {
+                    return;
+                }
+
+                connection.phone.send(
+                    JSON.stringify(message)
+                );
+
+                return;
+            }
+            if (message.type === "workspace.list.response") {
+                const connection = getConnectionBySocket(socket);
+
+                if (!connection?.phone) {
+                    console.log("❌ Paired phone not found");
+                    return;
+                }
+
+                connection.phone.send(JSON.stringify(message));
+
+                console.log("📂 Workspace response forwarded to phone");
+                return;
+            }
 
             if (message.type === "phone.pair") {
                 const isValid = validatePairingToken(
                     message.deviceId,
                     message.pairingToken
                 );
+
 
                 if (!isValid) {
                     console.log("❌ Pairing failed");
@@ -119,6 +173,84 @@ wss.on("connection", (socket) => {
                 }
 
                 phone.send(JSON.stringify(message));
+            }
+            if (message.type === "git.status.request") {
+                const connection = getConnectionByPhoneSocket(socket);
+
+                if (!connection) {
+                    console.log(" Phone Connection is not made");
+                    return;
+                }
+                connection.socket.send(JSON.stringify(message));
+                console.log("🌿 Git status request forwarded to agent");
+                return;
+
+            }
+            if (message.type === "git.status.response") {
+                const connection = getConnectionBySocket(socket);
+
+                if (!connection?.phone) {
+                    console.log("❌ Paired phone not found");
+                    return;
+                }
+
+                connection.phone.send(JSON.stringify(message));
+
+                console.log("🌿 Git status response forwarded to phone");
+                return;
+            }
+            if (message.type === "git.log.request") {
+                const connection = getConnectionByPhoneSocket(socket);
+
+                if (!connection) {
+                    console.log("❌ Phone connection not found");
+                    return;
+                }
+
+                connection.socket.send(JSON.stringify(message));
+
+                console.log("📜 Git log request forwarded to agent");
+                return;
+            }
+
+            if (message.type === "git.log.response") {
+                const connection = getConnectionBySocket(socket);
+
+                if (!connection?.phone) {
+                    console.log("❌ Paired phone not found");
+                    return;
+                }
+
+                connection.phone.send(JSON.stringify(message));
+
+                console.log("📜 Git log response forwarded to phone");
+                return;
+            }
+            if (message.type === "git.diff.request") {
+                const connection = getConnectionByPhoneSocket(socket);
+
+                if (!connection) {
+                    console.log("❌ Phone connection not found");
+                    return;
+                }
+
+                connection.socket.send(JSON.stringify(message));
+
+                console.log("🔍 Git diff request forwarded to agent");
+                return;
+            }
+            if (message.type === "git.diff.request") {
+                const connection = getConnectionByPhoneSocket(socket);
+
+                if (!connection) {
+                    console.log("❌ Phone connection not found");
+                    return;
+                }
+
+                connection.socket.send(JSON.stringify(message));
+
+                console.log("🔍 Git diff request forwarded to agent");
+                return;
             }
         } catch (error) {
             console.error("Invalid message received");

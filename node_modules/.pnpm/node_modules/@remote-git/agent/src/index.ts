@@ -5,6 +5,9 @@ import { generatePairingToken } from "./pairing/token.js";
 import type { PairingInfo } from "@remote-git/protocol";
 import { generatePairingQR } from "./pairing/qr.js";
 import fs from "node:fs/promises";
+import { addWorkspace,loadWorkspaceConfig } from "./workspace/config.js";
+import path from "node:path";
+
 
 
 console.log(" Remote Git Agent Starting..\n");
@@ -22,33 +25,33 @@ const pairingInfo: PairingInfo = {
   relay: "ws://192.168.1.61:8080",
 };
 
+const config = await loadWorkspaceConfig();
+
+if (config.workspaces.length === 0) {
+  const workspace = path.resolve(process.cwd());
+
+  await addWorkspace(workspace);
+
+  console.log(`📂 Initial workspace: ${workspace}`);
+} else {
+  console.log("📂 Configured workspaces:");
+
+  for (const workspace of config.workspaces) {
+    console.log(`   ${workspace}`);
+  }
+}
+
 const qr = await generatePairingQR(pairingInfo);
 
 await fs.writeFile("pairing.png", qr);
 
 console.log("📱 Pairing QR saved to pairing.png");
 
-async function setupPairing() {
-  const pairingInfo: PairingInfo = {
-    version: 1,
-    deviceId,
-    pairingToken,
-    relay: "ws://localhost:8080",
-  };
-
-  const qrDataUrl = await generatePairingQR(pairingInfo);
-
-  console.log("\n📱 Pairing QR generated");
-  console.log(qrDataUrl);
-}
-
-setupPairing();
-
 console.log(`Pairing Token: ${pairingToken}`);
 
 console.log("💻 Machine Information");
 console.log("----------------------");
-console.log(`Device Id : ${deviceId}`)
+console.log(`Device Id : ${deviceId}`);
 console.log(`Hostname: ${machine.hostname}`);
 console.log(`OS: ${machine.platform}`);
 console.log(`Architecture: ${machine.architecture}`);
@@ -59,4 +62,4 @@ console.log(`Free RAM: ${machine.freeMemory} GB`);
 
 console.log("\n🌐 Connecting to relay...");
 
-connectToRelay(deviceId,pairingToken,machine);
+connectToRelay(deviceId, pairingToken, machine);

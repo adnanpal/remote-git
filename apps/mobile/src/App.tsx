@@ -1,7 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { connectToRelay } from "./services/relay";
-import type { MachineInfoMessage } from "@remote-git/protocol";
+import type { MachineInfoMessage, GitRepository, Workspace, GitStatusResponseMessage, GitCommit, GitDiffResponseMessage } from "@remote-git/protocol";
+
+import LandingPage from "./components/LandingPage";
+import QRScanner from "./components/QRScanner";
+import ConnectionStatus from "./components/ConnectionStatus";
+import WorkspaceList from "./components/WorkSpaceList";
+import RepositoryList from "./components/RepositoryList";
+import RepositoryDashboard from "./components/RepositoryDashboard";
+import Navbar from "./components/Navbar";
+import BackgroundDecor from "./components/Backgounddecor";
+
 
 type PairingInfo = {
   version: number;
@@ -11,6 +21,27 @@ type PairingInfo = {
 };
 
 function App() {
+
+
+
+  const [selectedRepository, setSelectedRepository] =
+    useState<GitRepository | null>(null);
+
+  const [gitDiff, setGitDiff] =
+    useState<GitDiffResponseMessage | null>(null);
+
+  const [gitLog, setGitLog] = useState<GitCommit[]>([]);
+
+  const [gitStatus, setGitStatus] =
+    useState<GitStatusResponseMessage | null>(null);
+
+  const [workspaces, setWorkspaces] =
+    useState<Workspace[]>([]);
+
+  const [repositories, setRepositories] = useState<GitRepository[]>([]);
+  const relayRef = useRef<ReturnType<typeof connectToRelay> | null>(
+    null
+  );
   const [status, setStatus] = useState("Not connected");
 
   const [machine, setMachine] =
@@ -48,11 +79,10 @@ function App() {
       console.log("📷 Using camera:", camera);
 
       const scanner = new Html5Qrcode("qr-reader");
-
       scannerRef.current = scanner;
 
       await scanner.start(
-        camera.id,
+        { facingMode: "environment" },
         {
           fps: 10,
           qrbox: {
@@ -86,11 +116,34 @@ function App() {
 
             setStatus("Connecting to laptop...");
 
-            connectToRelay(pairingInfo, {
+            relayRef.current = connectToRelay(pairingInfo, {
               onSuccess: () => {
                 console.log("🎉 Pairing successful!");
 
                 setStatus("Connected to laptop");
+                relayRef.current?.requestRepositories();
+                relayRef.current?.requestWorkspaces();
+              },
+              onGitStatus: (message) => {
+                console.log("🌿 Git status received:", message);
+
+                setGitStatus(message);
+              },
+              onGitLog: (message) => {
+                console.log("📜 Git log received:", message);
+
+                if (message.error) {
+                  console.error("❌ Git log error:", message.error);
+                  setGitLog([]);
+                  return;
+                }
+
+                setGitLog(message.commits);
+              },
+              onGitDiff: (message) => {
+                console.log("🔍 Git diff received:", message);
+
+                setGitDiff(message);
               },
 
               onMachineInfo: (message) => {
@@ -101,6 +154,23 @@ function App() {
 
                 setMachine(message.machine);
                 setStatus("Laptop connected");
+              },
+
+              onRepositories: (message) => {
+                console.log(
+                  "📂 Repositories received:",
+                  message.repositories
+                );
+
+                setRepositories(message.repositories);
+              },
+              onWorkspaces: (message) => {
+                console.log(
+                  "📂 Workspaces received:",
+                  message.workspaces
+                );
+
+                setWorkspaces(message.workspaces);
               },
 
               onError: (message) => {
@@ -139,6 +209,24 @@ function App() {
     }
   };
 
+  // Lets the user back out of the scanner screen. Additive only —
+  // does not change the pairing/relay logic above.
+  const cancelScanning = async () => {
+    const scanner = scannerRef.current;
+
+    if (scanner) {
+      try {
+        await scanner.stop();
+        scanner.clear();
+      } catch {
+        // Scanner may already be stopped; nothing else to do.
+      }
+    }
+
+    scannerRef.current = null;
+    setScanning(false);
+  };
+
   useEffect(() => {
     return () => {
       const scanner = scannerRef.current;
@@ -146,156 +234,113 @@ function App() {
       if (scanner) {
         scanner
           .stop()
-          .catch(() => {});
+          .catch(() => { });
       }
     };
   }, []);
 
+  const handleSelectRepository = (repo: GitRepository) => {
+    console.log("📁 Repository selected:", repo);
+
+    setSelectedRepository(repo);
+    setGitStatus(null);
+    setGitLog([]);
+    setGitDiff(null);
+
+    relayRef.current?.requestGitStatus(repo.path);
+    relayRef.current?.requestGitLog(repo.path, 20);
+  };
+
+  const handleBackToRepositories = () => {
+    setSelectedRepository(null);
+    setGitStatus(null);
+  };
+
+  // Derived screen — all from existing state, no extra state needed.
+  const screen = scanning
+    ? "scanning"
+    : !machine
+      ? status === "Not connected"
+        ? "landing"
+        : "connecting"
+      : selectedRepository
+        ? "repository"
+        : "connected";
+
+  const pairingFailed = status.startsWith("Pairing failed");
+
   return (
-    <main className="min-h-screen bg-zinc-950 text-white flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
+    <div className="relative min-h-screen">
+      <BackgroundDecor />
+      <Navbar connected={!!machine} hostname={machine?.hostname} />
 
-        {/* Header */}
-
-        <div className="mb-8">
-          <p className="text-sm text-zinc-400 mb-2">
-            Remote Git
-          </p>
-
-          <h1 className="text-3xl font-semibold">
-            Connect your laptop
-          </h1>
-
-          <p className="text-zinc-400 mt-3">
-            Scan the QR code displayed by the
-            Remote Git agent on your laptop.
-          </p>
-        </div>
-
-        {/* Scanner */}
-
-        {!scanning && !machine && (
-          <button
-            onClick={startScanner}
-            className="
-              w-full
-              rounded-xl
-              bg-white
-              text-black
-              py-4
-              font-medium
-              hover:bg-zinc-200
-              transition
-            "
-          >
-            📷 Scan QR Code
-          </button>
+      <main className="relative">
+        {screen === "landing" && (
+          <LandingPage onScan={startScanner} error={error} />
         )}
 
-        {scanning && (
-          <div className="rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900">
-            <div id="qr-reader" />
-          </div>
+        {screen === "scanning" && (
+          <QRScanner onCancel={cancelScanning} error={error} />
         )}
 
-        {/* Error */}
+        {screen === "connecting" && (
+          <div className="w-full max-w-md mx-auto px-5 pt-28 pb-14 animate-fade-in-up">
+            <div className="rounded-3xl border border-white/60 bg-white/50 backdrop-blur-xl shadow-sm shadow-emerald-900/5 p-6">
+              <p className="text-xs font-medium tracking-wide text-emerald-700/70 uppercase mb-3">
+                Remote Git
+              </p>
 
-        {error && (
-          <p className="text-red-400 text-sm mt-4">
-            {error}
-          </p>
-        )}
-
-        {/* Connection Status */}
-
-        {status !== "Not connected" && (
-          <div className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-            <p className="text-sm text-zinc-400">
-              Status
-            </p>
-
-            <p className="mt-1 font-medium">
-              {status}
-            </p>
-          </div>
-        )}
-
-        {/* Laptop Information */}
-
-        {machine && (
-          <div className="mt-4 rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-            <h2 className="text-lg font-semibold">
-              💻 Your Laptop
-            </h2>
-
-            <div className="mt-4 space-y-3 text-sm">
-
-              <div className="flex justify-between gap-4">
-                <span className="text-zinc-400">
-                  Hostname
-                </span>
-
-                <span>
-                  {machine.hostname}
-                </span>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`h-2 w-2 rounded-full ${pairingFailed ? "bg-red-400" : "bg-amber-400 animate-pulse"
+                    }`}
+                />
+                <p className="text-sm text-slate-700">{status}</p>
               </div>
 
-              <div className="flex justify-between gap-4">
-                <span className="text-zinc-400">
-                  Platform
-                </span>
-
-                <span>
-                  {machine.platform}
-                </span>
-              </div>
-
-              <div className="flex justify-between gap-4">
-                <span className="text-zinc-400">
-                  Architecture
-                </span>
-
-                <span>
-                  {machine.architecture}
-                </span>
-              </div>
-
-              <div className="flex justify-between gap-4">
-                <span className="text-zinc-400">
-                  CPU
-                </span>
-
-                <span className="text-right max-w-[220px]">
-                  {machine.cpu}
-                </span>
-              </div>
-
-              <div className="flex justify-between gap-4">
-                <span className="text-zinc-400">
-                  CPU Cores
-                </span>
-
-                <span>
-                  {machine.cpuCores}
-                </span>
-              </div>
-
-              <div className="flex justify-between gap-4">
-                <span className="text-zinc-400">
-                  Memory
-                </span>
-
-                <span>
-                  {machine.totalMemory} GB
-                </span>
-              </div>
-
+              {pairingFailed && (
+                <button
+                  onClick={startScanner}
+                  className="mt-6 w-full rounded-xl border border-slate-200 bg-white/60 py-3 text-sm text-slate-600 transition-colors hover:bg-white"
+                >
+                  Scan again
+                </button>
+              )}
             </div>
           </div>
         )}
 
-      </div>
-    </main>
+        {screen === "connected" && machine && (
+          <div className="w-full max-w-md mx-auto px-5 pt-28 pb-14 space-y-6">
+            <ConnectionStatus machine={machine} status={status} />
+            <WorkspaceList workspaces={workspaces} />
+            <RepositoryList
+              repositories={repositories}
+              onSelect={handleSelectRepository}
+            />
+          </div>
+        )}
+
+        {screen === "repository" && selectedRepository && (
+          <RepositoryDashboard
+            repository={selectedRepository}
+            gitStatus={gitStatus}
+            gitLog={gitLog}
+            gitDiff={gitDiff}
+            onRequestDiff={(filePath) => {
+              setGitDiff(null);
+
+              relayRef.current?.requestGitDiff(
+                selectedRepository.path,
+                filePath
+              );
+            }}
+
+            onBack={handleBackToRepositories}
+          />
+        )}
+      </main>
+    </div>
   );
 }
 

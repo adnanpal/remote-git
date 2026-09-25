@@ -56,7 +56,31 @@ export function attachPhone(
 export function getPhoneConnection(deviceId: string) {
   return connections.get(deviceId)?.phone;
 }
+export function getConnectionBySocket(socket: WebSocket) {
+  for (const [deviceId, connection] of connections.entries()) {
+    if (connection.socket === socket) {
+      return {
+        deviceId,
+        ...connection,
+      };
+    }
+  }
 
+  return undefined;
+}
+
+export function getConnectionByPhoneSocket(socket: WebSocket) {
+  for (const [deviceId, connection] of connections.entries()) {
+    if (connection.phone === socket) {
+      return {
+        deviceId,
+        ...connection,
+      };
+    }
+  }
+
+  return undefined;
+}
 export function removeConnection(deviceId: string) {
   connections.delete(deviceId);
 
