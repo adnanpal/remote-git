@@ -1,0 +1,16 @@
+{
+  "name": "remote-git",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:agent": "pnpm --filter @remote-git/agent dev",
+    "dev:relay": "pnpm --filter @remote-git/relay dev",
+    "dev:mobile": "pnpm --filter @remote-git/mobile dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  }
+}
