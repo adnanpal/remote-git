@@ -1,5 +1,5 @@
 import { WebSocketServer } from "ws";
-import { registerConnection, removeConnection, getConnection, validatePairingToken, attachPhone, getConnectionBySocket, getConnectionByPhoneSocket } from "./connections.js";
+import { registerConnection, removeConnection, getConnection, validatePairingToken, attachPhone, getConnectionBySocket, getConnectionByPhoneSocket, sendToDevice } from "./connections.js";
 
 const PORT = Number(process.env.PORT) || 8080;
 const wss = new WebSocketServer({
@@ -45,8 +45,9 @@ wss.on("connection", (socket) => {
                     return;
                 }
 
-                connection.socket.send(
-                    JSON.stringify(message)
+                sendToDevice(
+                    connection.deviceId,
+                    message
                 );
 
                 return;
@@ -59,7 +60,10 @@ wss.on("connection", (socket) => {
                     return;
                 }
 
-                connection.socket.send(JSON.stringify(message));
+                sendToDevice(
+                    connection.deviceId,
+                    message
+                );
 
                 console.log("📂 Workspace request forwarded to agent");
                 return;
@@ -152,11 +156,16 @@ wss.on("connection", (socket) => {
                     })
                 );
 
-                connection.socket.send(
-                    JSON.stringify({
+                const sent = sendToDevice(
+                    message.deviceId,
+                    {
                         type: "phone.connected",
-                    })
+                    }
                 );
+
+                if (!sent) {
+                    console.log("⚠️ Laptop is currently offline");
+                }
             }
             if (message.type === "machine.info") {
                 if (!deviceId) {
@@ -179,7 +188,10 @@ wss.on("connection", (socket) => {
                     console.log(" Phone Connection is not made");
                     return;
                 }
-                connection.socket.send(JSON.stringify(message));
+                sendToDevice(
+                    connection.deviceId,
+                    message
+                );
                 console.log("🌿 Git status request forwarded to agent");
                 return;
 
@@ -205,7 +217,10 @@ wss.on("connection", (socket) => {
                     return;
                 }
 
-                connection.socket.send(JSON.stringify(message));
+                sendToDevice(
+                    connection.deviceId,
+                    message
+                );
 
                 console.log("📜 Git log request forwarded to agent");
                 return;
@@ -232,7 +247,10 @@ wss.on("connection", (socket) => {
                     return;
                 }
 
-                connection.socket.send(JSON.stringify(message));
+                sendToDevice(
+                    connection.deviceId,
+                    message
+                );
 
                 console.log("🔍 Git diff request forwarded to agent");
                 return;
@@ -245,7 +263,10 @@ wss.on("connection", (socket) => {
                     return;
                 }
 
-                connection.socket.send(JSON.stringify(message));
+                sendToDevice(
+                    connection.deviceId,
+                    message
+                );
 
                 console.log("🔍 Git diff request forwarded to agent");
                 return;
@@ -258,7 +279,10 @@ wss.on("connection", (socket) => {
                     return;
                 }
 
-                connection.socket.send(JSON.stringify(message));
+                sendToDevice(
+                    connection.deviceId,
+                    message
+                );
 
                 console.log("⬆️ Git push request forwarded to agent");
 
@@ -286,8 +310,9 @@ wss.on("connection", (socket) => {
                     return;
                 }
 
-                connection.socket.send(
-                    JSON.stringify(message)
+                sendToDevice(
+                    connection.deviceId,
+                    message
                 );
 
                 console.log(

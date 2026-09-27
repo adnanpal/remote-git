@@ -1,7 +1,7 @@
 import type WebSocket from "ws";
 
 type DeviceConnection = {
-  socket: WebSocket;
+  socket?: WebSocket;
   pairingToken: string;
   phone?: WebSocket;
 };
@@ -81,8 +81,28 @@ export function getConnectionByPhoneSocket(socket: WebSocket) {
 
   return undefined;
 }
-export function removeConnection(deviceId: string) {
-  connections.delete(deviceId);
+export function sendToDevice(
+  deviceId: string,
+  message: unknown
+) {
+  const connection = connections.get(deviceId);
 
-  console.log(`❌ Removed connection: ${deviceId}`);
+  if (!connection?.socket) {
+    console.log(`⚠️ Device offline: ${deviceId}`);
+    return false;
+  }
+
+  connection.socket.send(JSON.stringify(message));
+  return true;
+}
+export function removeConnection(deviceId: string) {
+  const connection = connections.get(deviceId);
+
+  if (!connection) {
+    return;
+  }
+
+  connection.socket = undefined;
+
+  console.log(`🔌 Device disconnected: ${deviceId}`);
 }
