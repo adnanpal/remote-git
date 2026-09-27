@@ -95,10 +95,20 @@ export function sendToDevice(
   connection.socket.send(JSON.stringify(message));
   return true;
 }
-export function removeConnection(deviceId: string) {
+export function removeConnection(
+  deviceId: string,
+  socket: WebSocket
+) {
   const connection = connections.get(deviceId);
 
   if (!connection) {
+    return;
+  }
+
+  // Ignore a stale socket closing after a newer connection
+  // has already replaced it.
+  if (connection.socket !== socket) {
+    console.log(`⚠️ Ignoring stale socket: ${deviceId}`);
     return;
   }
 

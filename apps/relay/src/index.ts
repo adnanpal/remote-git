@@ -347,7 +347,7 @@ wss.on("connection", (socket) => {
 
     socket.on("close", () => {
         if (deviceId) {
-            removeConnection(deviceId);
+            removeConnection(deviceId,socket);
         }
         console.log("❌ Device disconnected");
     });
