@@ -6,7 +6,9 @@ import type {
     WorkspaceListResponseMessage,
     GitStatusResponseMessage,
     GitLogResponseMessage,
+    GitCommitResponseMessage,
     GitDiffResponseMessage,
+    GitPushResponseMessage,
 } from "@remote-git/protocol";
 
 type PairingInfo = {
@@ -37,6 +39,8 @@ type RelayCallbacks = {
     onGitStatus: (message: GitStatusResponseMessage) => void;
     onGitLog: (message: GitLogResponseMessage) => void;
     onGitDiff: (message: GitDiffResponseMessage) => void;
+    onGitPush: (message: GitPushResponseMessage) => void;
+    onGitCommit: (message: GitCommitResponseMessage) => void;
 };
 
 export function connectToRelay(
@@ -108,6 +112,13 @@ export function connectToRelay(
                     break;
                 case "git.diff.response":
                     callbacks.onGitDiff(message);
+                    break;
+
+                case "git.push.response":
+                    callbacks.onGitPush(message);
+                    break;
+                case "git.commit.response":
+                    callbacks.onGitCommit(message);
                     break;
 
                 default:
@@ -196,5 +207,36 @@ export function connectToRelay(
                 })
             );
         },
+        requestGitCommit(
+            repositoryPath: string,
+            files: string[],
+            message: string
+        ) {
+            console.log(
+                "💾 Requesting Git commit:",
+                repositoryPath,
+                files
+            );
+
+            socket.send(
+                JSON.stringify({
+                    type: "git.commit.request",
+                    repositoryPath,
+                    files,
+                    message,
+                })
+            );
+        },
+        requestGitPush(repositoryPath: string) {
+            console.log("⬆️ Requesting Git push:", repositoryPath);
+
+            socket.send(
+                JSON.stringify({
+                    type: "git.push.request",
+                    repositoryPath,
+                })
+            );
+        },
+
     };
 }

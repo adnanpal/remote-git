@@ -46,8 +46,8 @@ function buildTerminalLines(status: GitStatusResponseMessage): TerminalLine[] {
 function GitStatus({ gitStatus }: GitStatusProps) {
   if (!gitStatus) {
     return (
-      <div className="flex items-center gap-2 text-sm text-slate-500">
-        <span className="h-3.5 w-3.5 rounded-full border-2 border-emerald-500/30 border-t-emerald-500 animate-spin" />
+      <div className="flex items-center gap-2 text-sm text-[#8b95a1]">
+        <span className="h-3.5 w-3.5 rounded-full border-2 border-[#39e08a]/30 border-t-[#39e08a] animate-spin" />
         Loading Git status...
       </div>
     );
@@ -56,10 +56,10 @@ function GitStatus({ gitStatus }: GitStatusProps) {
   return (
     <div className="space-y-4 animate-fade-in-up">
       {/* Summary */}
-      <div className="rounded-xl border border-emerald-900/5 bg-white/70 p-4">
+      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-slate-500">Branch</span>
-          <span className="text-sm font-mono text-slate-800">
+          <span className="text-sm text-[#8b95a1]">Branch</span>
+          <span className="text-sm font-mono text-[#eef1f4]">
             {gitStatus.branch}
           </span>
         </div>
@@ -67,43 +67,43 @@ function GitStatus({ gitStatus }: GitStatusProps) {
         <div className="mt-3 flex items-center gap-2">
           <span
             className={`h-2 w-2 rounded-full ${
-              gitStatus.clean ? "bg-emerald-500" : "bg-amber-400"
+              gitStatus.clean ? "bg-[#39e08a]" : "bg-[#f5b95e]"
             }`}
           />
-          <span className="text-sm text-slate-700">
+          <span className="text-sm text-[#c7ccd3]">
             {gitStatus.clean ? "Working tree clean" : "Changes detected"}
           </span>
         </div>
 
         <div className="mt-4 grid grid-cols-4 gap-3 text-center">
           <div>
-            <p className="text-sm font-mono text-slate-800">
+            <p className="text-sm font-mono text-[#eef1f4]">
               {gitStatus.staged.length}
             </p>
-            <p className="text-[11px] text-slate-500 mt-0.5">Staged</p>
+            <p className="text-[11px] text-[#5b6470] mt-0.5">Staged</p>
           </div>
           <div>
-            <p className="text-sm font-mono text-slate-800">
+            <p className="text-sm font-mono text-[#eef1f4]">
               {gitStatus.modified.length}
             </p>
-            <p className="text-[11px] text-slate-500 mt-0.5">Modified</p>
+            <p className="text-[11px] text-[#5b6470] mt-0.5">Modified</p>
           </div>
           <div>
-            <p className="text-sm font-mono text-slate-800">
+            <p className="text-sm font-mono text-[#eef1f4]">
               {gitStatus.untracked.length}
             </p>
-            <p className="text-[11px] text-slate-500 mt-0.5">Untracked</p>
+            <p className="text-[11px] text-[#5b6470] mt-0.5">Untracked</p>
           </div>
           <div>
-            <p className="text-sm font-mono text-slate-800">
+            <p className="text-sm font-mono text-[#eef1f4]">
               {gitStatus.ahead}/{gitStatus.behind}
             </p>
-            <p className="text-[11px] text-slate-500 mt-0.5">Ahead/Behind</p>
+            <p className="text-[11px] text-[#5b6470] mt-0.5">Ahead/Behind</p>
           </div>
         </div>
 
         {gitStatus.error && (
-          <p className="text-red-500 text-sm mt-4">{gitStatus.error}</p>
+          <p className="text-[#ff6b6b] text-sm mt-4">{gitStatus.error}</p>
         )}
       </div>
 

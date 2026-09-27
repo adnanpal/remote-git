@@ -9,6 +9,8 @@ import { getWorkspaces } from "../workspace/config.js";
 import { getGitStatus } from "../git/status.js";
 import { getGitLog } from "../git/log.js";
 import { getGitDiff } from "../git/diff.js";
+import { pushGitRepository } from "../git/push.js";
+import { commitGitRepository } from "../git/commit.js";
 
 export function connectToRelay(
     deviceId: string,
@@ -190,6 +192,93 @@ export function connectToRelay(
                             error instanceof Error
                                 ? error.message
                                 : "Git diff failed",
+                    })
+                );
+            }
+
+            return;
+        }
+        if (message.type === "git.push.request") {
+            console.log("⬆️ Git push requested");
+
+            try {
+                const result = await pushGitRepository(
+                    message.repositoryPath
+                );
+
+                socket.send(
+                    JSON.stringify({
+                        type: "git.push.response",
+                        repositoryPath: message.repositoryPath,
+                        success: true,
+                        output: result.output,
+                    })
+                );
+
+                console.log("⬆️ Git push completed");
+            } catch (error) {
+                const errorMessage =
+                    error instanceof Error
+                        ? error.message
+                        : "Git push failed";
+
+                console.error(
+                    "❌ Git push failed:",
+                    errorMessage
+                );
+
+                socket.send(
+                    JSON.stringify({
+                        type: "git.push.response",
+                        repositoryPath: message.repositoryPath,
+                        success: false,
+                        output: "",
+                        error: errorMessage,
+                    })
+                );
+            }
+
+            return;
+        }
+
+        if (message.type === "git.commit.request") {
+            console.log("💾 Git commit requested");
+
+            try {
+                const result = await commitGitRepository(
+                    message.repositoryPath,
+                    message.files,
+                    message.message
+                );
+
+                socket.send(
+                    JSON.stringify({
+                        type: "git.commit.response",
+                        repositoryPath: message.repositoryPath,
+                        success: true,
+                        output: result.output,
+                    })
+                );
+
+                console.log("💾 Git commit completed");
+            } catch (error) {
+                const errorMessage =
+                    error instanceof Error
+                        ? error.message
+                        : "Git commit failed";
+
+                console.error(
+                    "❌ Git commit failed:",
+                    errorMessage
+                );
+
+                socket.send(
+                    JSON.stringify({
+                        type: "git.commit.response",
+                        repositoryPath: message.repositoryPath,
+                        success: false,
+                        output: "",
+                        error: errorMessage,
                     })
                 );
             }

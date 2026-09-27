@@ -252,6 +252,71 @@ wss.on("connection", (socket) => {
                 console.log("🔍 Git diff request forwarded to agent");
                 return;
             }
+            if (message.type === "git.push.request") {
+                const connection = getConnectionByPhoneSocket(socket);
+
+                if (!connection) {
+                    console.log("❌ Phone connection not found");
+                    return;
+                }
+
+                connection.socket.send(JSON.stringify(message));
+
+                console.log("⬆️ Git push request forwarded to agent");
+
+                return;
+            }
+            if (message.type === "git.push.response") {
+                const connection = getConnectionBySocket(socket);
+
+                if (!connection?.phone) {
+                    console.log("❌ Paired phone not found");
+                    return;
+                }
+
+                connection.phone.send(JSON.stringify(message));
+
+                console.log("⬆️ Git push response forwarded to phone");
+
+                return;
+            }
+            if (message.type === "git.commit.request") {
+                const connection = getConnectionByPhoneSocket(socket);
+
+                if (!connection) {
+                    console.log("❌ Phone connection not found");
+                    return;
+                }
+
+                connection.socket.send(
+                    JSON.stringify(message)
+                );
+
+                console.log(
+                    "💾 Git commit request forwarded to agent"
+                );
+
+                return;
+            }
+
+            if (message.type === "git.commit.response") {
+                const connection = getConnectionBySocket(socket);
+
+                if (!connection?.phone) {
+                    console.log("❌ Paired phone not found");
+                    return;
+                }
+
+                connection.phone.send(
+                    JSON.stringify(message)
+                );
+
+                console.log(
+                    "💾 Git commit response forwarded to phone"
+                );
+
+                return;
+            }
         } catch (error) {
             console.error("Invalid message received");
         }

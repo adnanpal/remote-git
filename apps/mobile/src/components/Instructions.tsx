@@ -13,7 +13,7 @@ const steps: InstructionStep[] = [
     description: (
       <>
         Open a terminal on your computer and run{" "}
-        <code className="rounded-md bg-emerald-900/5 border border-emerald-900/10 px-1.5 py-0.5 font-mono text-xs text-emerald-800">
+        <code className="rounded-md bg-white/[0.06] border border-white/10 px-1.5 py-0.5 font-mono text-xs text-[#39e08a]">
           npx remote-git
         </code>
         .
@@ -27,7 +27,7 @@ const steps: InstructionStep[] = [
   },
   {
     step: 3,
-    title: "Open Remote Git on your phone",
+    title: "Open Remote-Git on your phone",
     description: "Open this web app in your phone's browser.",
   },
   {
@@ -46,29 +46,29 @@ const steps: InstructionStep[] = [
 function Instructions() {
   return (
     <section
-      className="mt-6 rounded-2xl border border-white/60 bg-white/50 backdrop-blur-xl shadow-sm shadow-emerald-900/5 p-6 animate-fade-in-up"
+      className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-6 animate-fade-in-up"
       style={{ animationDelay: "260ms" }}
     >
-      <p className="text-xs font-medium tracking-wide text-emerald-700/70 uppercase mb-4">
-        How to use Remote Git
+      <p className="text-xs font-medium tracking-[.14em] text-[#39e08a] uppercase mb-4 font-mono">
+        How to use Remote-Git
       </p>
 
       <ol className="space-y-4">
         {steps.map(({ step, title, description }) => (
           <li key={step} className="flex gap-3">
-            <span className="flex-none mt-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/10 text-[11px] font-mono text-emerald-700">
+            <span className="flex-none mt-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#39e08a]/10 text-[11px] font-mono text-[#39e08a]">
               {step}
             </span>
             <div>
-              <p className="text-sm text-slate-800">{title}</p>
-              <p className="text-sm text-slate-500 mt-0.5">{description}</p>
+              <p className="text-sm text-[#eef1f4]">{title}</p>
+              <p className="text-sm text-[#8b95a1] mt-0.5">{description}</p>
             </div>
           </li>
         ))}
       </ol>
 
-      <p className="mt-6 text-xs text-slate-500 leading-relaxed">
-        Your Git repositories stay on your computer. Remote Git talks to the
+      <p className="mt-6 text-xs text-[#5b6470] leading-relaxed">
+        Your Git repositories stay on your computer. Remote-Git talks to the
         local agent on your laptop instead of uploading your repositories
         anywhere.
       </p>

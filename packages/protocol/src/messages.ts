@@ -75,6 +75,32 @@ export type GitDiffResponseMessage = {
   diff: string;
   error?: string;
 };
+export type GitCommitRequestMessage = {
+  type: "git.commit.request";
+  repositoryPath: string;
+  files: string[];
+  message: string;
+};
+
+export type GitCommitResponseMessage = {
+  type: "git.commit.response";
+  repositoryPath: string;
+  success: boolean;
+  output: string;
+  error?: string;
+};
+export type GitPushRequestMessage = {
+  type: "git.push.request";
+  repositoryPath: string;
+};
+
+export type GitPushResponseMessage = {
+  type: "git.push.response";
+  repositoryPath: string;
+  success: boolean;
+  output: string;
+  error?: string;
+};
 
 export type GitRepository = {
     name: string;
@@ -98,6 +124,15 @@ export type PhonePairMessage = {
     deviceId: string;
     pairingToken: string;
 };
+
+export type GitCommitMessage = {
+  type: "git.commit.request";
+  repositoryPath: string;
+  files: string[];
+  message: string;
+
+};
+
 
 export type PairSuccessMessage = {
     type: "pair.success";
@@ -160,7 +195,12 @@ export type Message =
   | WorkspaceListResponseMessage
   | GitLogRequestMessage
   | GitCommit
+  | GitCommitMessage
+  | GitCommitRequestMessage
+  | GitCommitResponseMessage
   | GitLogResponseMessage
   | GitRepositoriesResponseMessage
+  | GitPushRequestMessage
+  | GitPushResponseMessage
   | GitDiffRequestMessage
   | GitDiffResponseMessage;

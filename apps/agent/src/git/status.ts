@@ -82,28 +82,32 @@ export async function getGitStatus(repositoryPath: string) {
     const modified: string[] = [];
     const untracked: string[] = [];
 
-    for (const line of lines.slice(1)) {
-      if (line.length < 3) continue;
+   for (const line of lines.slice(1)) {
+  if (line.length < 3) continue;
 
-      const indexStatus = line[0];
-      const workingTreeStatus = line[1];
-      const filePath = line.slice(3);
+  const indexStatus = line[0];
+  const workingTreeStatus = line[1];
+  const filePath = line.slice(3);
 
-      if (indexStatus !== " ") {
-        staged.push(filePath);
-      }
+  // Untracked file: ?? filename
+  if (indexStatus === "?" && workingTreeStatus === "?") {
+    untracked.push(filePath);
+    continue;
+  }
 
-      if (
-        workingTreeStatus === "M" ||
-        workingTreeStatus === "D"
-      ) {
-        modified.push(filePath);
-      }
+  // Changes staged in the index
+  if (indexStatus !== " ") {
+    staged.push(filePath);
+  }
 
-      if (indexStatus === "?" && workingTreeStatus === "?") {
-        untracked.push(filePath);
-      }
-    }
+  // Changes in the working tree
+  if (
+    workingTreeStatus === "M" ||
+    workingTreeStatus === "D"
+  ) {
+    modified.push(filePath);
+  }
+}
 
     return {
       repositoryPath: resolvedRepository,
