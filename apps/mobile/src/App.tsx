@@ -1,17 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { connectToRelay } from "./services/relay";
-import type { MachineInfoMessage, GitRepository, Workspace, GitStatusResponseMessage, GitCommit, GitDiffResponseMessage } from "@remote-git/protocol";
+import type { MachineInfoMessage, GitRepository, Workspace, GitStatusResponseMessage, GitCommit, GitDiffResponseMessage, GitPushResponseMessage, GitCommitResponseMessage } from "@remote-git/protocol";
 
 import LandingPage from "./components/LandingPage";
 import QRScanner from "./components/QRScanner";
 import ConnectionStatus from "./components/ConnectionStatus";
-import WorkspaceList from "./components/WorkSpaceList";
-import RepositoryList from "./components/RepositoryList";
-import RepositoryDashboard from "./components/RepositoryDashboard";
+import WorkspaceList from "./components/Workspacelist";
+import RepositoryList from "./components/Repositorylist";
+import RepositoryDashboard from "./components/Repositorydashboard";
 import Navbar from "./components/Navbar";
 import BackgroundDecor from "./components/Backgounddecor";
-
 
 type PairingInfo = {
   version: number;
@@ -22,15 +21,23 @@ type PairingInfo = {
 
 function App() {
 
+  const [gitCommit, setGitCommit] =
+    useState<GitCommitResponseMessage | null>(null);
 
+  const [isCommitting, setIsCommitting] =
+    useState(false);
+
+  const [gitPush, setGitPush] =
+    useState<GitPushResponseMessage | null>(null);
+
+  const [isPushing, setIsPushing] = useState(false);
 
   const [selectedRepository, setSelectedRepository] =
     useState<GitRepository | null>(null);
 
+  const [gitLog, setGitLog] = useState<GitCommit[]>([]);
   const [gitDiff, setGitDiff] =
     useState<GitDiffResponseMessage | null>(null);
-
-  const [gitLog, setGitLog] = useState<GitCommit[]>([]);
 
   const [gitStatus, setGitStatus] =
     useState<GitStatusResponseMessage | null>(null);
@@ -129,22 +136,6 @@ function App() {
 
                 setGitStatus(message);
               },
-              onGitLog: (message) => {
-                console.log("📜 Git log received:", message);
-
-                if (message.error) {
-                  console.error("❌ Git log error:", message.error);
-                  setGitLog([]);
-                  return;
-                }
-
-                setGitLog(message.commits);
-              },
-              onGitDiff: (message) => {
-                console.log("🔍 Git diff received:", message);
-
-                setGitDiff(message);
-              },
 
               onMachineInfo: (message) => {
                 console.log(
@@ -172,6 +163,22 @@ function App() {
 
                 setWorkspaces(message.workspaces);
               },
+              onGitLog: (message) => {
+                console.log("📜 Git log received:", message);
+
+                if (message.error) {
+                  console.error("❌ Git log error:", message.error);
+                  setGitLog([]);
+                  return;
+                }
+
+                setGitLog(message.commits);
+              },
+
+              onGitDiff: (message) => {
+                console.log("🔍 Git diff received:", message);
+                setGitDiff(message);
+              },
 
               onError: (message) => {
                 console.error(
@@ -182,6 +189,36 @@ function App() {
                 setStatus(
                   `Pairing failed: ${message.reason}`
                 );
+              },
+              onGitPush: (message) => {
+                console.log("⬆️ Git push received:", message);
+
+                setGitPush(message);
+                setIsPushing(false);
+
+                if (message.success) {
+                  // Refresh Git status after a successful push.
+                  relayRef.current?.requestGitStatus(
+                    message.repositoryPath
+                  );
+                }
+              },
+              onGitCommit: (message) => {
+                console.log("💾 Git commit received:", message);
+
+                setGitCommit(message);
+                setIsCommitting(false);
+
+                if (message.success) {
+                  relayRef.current?.requestGitStatus(
+                    message.repositoryPath
+                  );
+
+                  relayRef.current?.requestGitLog(
+                    message.repositoryPath,
+                    20
+                  );
+                }
               },
             });
           } catch (error) {
@@ -246,14 +283,63 @@ function App() {
     setGitStatus(null);
     setGitLog([]);
     setGitDiff(null);
+    setGitPush(null);
+    setIsPushing(false);
+    setGitCommit(null);
+    setIsCommitting(false);
+
 
     relayRef.current?.requestGitStatus(repo.path);
     relayRef.current?.requestGitLog(repo.path, 20);
   };
+  const handleGitCommit = (
+  files: string[],
+  message: string
+) => {
+  if (!selectedRepository || isCommitting) {
+    return;
+  }
 
+  console.log(
+    "💾 Starting Git commit:",
+    selectedRepository.path,
+    files,
+    message
+  );
+
+  setGitCommit(null);
+  setIsCommitting(true);
+
+  relayRef.current?.requestGitCommit(
+    selectedRepository.path,
+    files,
+    message
+  );
+};
+  const handleGitPush = () => {
+    if (!selectedRepository || isPushing) {
+      return;
+    }
+
+    console.log(
+      "⬆️ Starting Git push:",
+      selectedRepository.path
+    );
+
+    setGitPush(null);
+    setIsPushing(true);
+
+    relayRef.current?.requestGitPush(
+      selectedRepository.path
+    );
+  };
   const handleBackToRepositories = () => {
     setSelectedRepository(null);
     setGitStatus(null);
+    setGitLog([]);
+    setGitPush(null);
+    setIsPushing(false);
+    setGitDiff(null);
   };
 
   // Derived screen — all from existing state, no extra state needed.
@@ -270,9 +356,11 @@ function App() {
   const pairingFailed = status.startsWith("Pairing failed");
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen bg-[#05070a] text-[#eef1f4]">
       <BackgroundDecor />
-      <Navbar connected={!!machine} hostname={machine?.hostname} />
+      {screen !== "landing" && (
+        <Navbar connected={!!machine} hostname={machine?.hostname} />
+      )}
 
       <main className="relative">
         {screen === "landing" && (
@@ -285,23 +373,23 @@ function App() {
 
         {screen === "connecting" && (
           <div className="w-full max-w-md mx-auto px-5 pt-28 pb-14 animate-fade-in-up">
-            <div className="rounded-3xl border border-white/60 bg-white/50 backdrop-blur-xl shadow-sm shadow-emerald-900/5 p-6">
-              <p className="text-xs font-medium tracking-wide text-emerald-700/70 uppercase mb-3">
-                Remote Git
+            <div className="rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-6">
+              <p className="text-xs font-medium tracking-[.14em] text-[#39e08a] uppercase mb-3 font-mono">
+                Remote-Git
               </p>
 
               <div className="flex items-center gap-2">
                 <span
-                  className={`h-2 w-2 rounded-full ${pairingFailed ? "bg-red-400" : "bg-amber-400 animate-pulse"
+                  className={`h-2 w-2 rounded-full ${pairingFailed ? "bg-[#ff6b6b]" : "bg-[#f5b95e] animate-pulse-dot"
                     }`}
                 />
-                <p className="text-sm text-slate-700">{status}</p>
+                <p className="text-sm text-[#c7ccd3]">{status}</p>
               </div>
 
               {pairingFailed && (
                 <button
                   onClick={startScanner}
-                  className="mt-6 w-full rounded-xl border border-slate-200 bg-white/60 py-3 text-sm text-slate-600 transition-colors hover:bg-white"
+                  className="mt-6 w-full rounded-xl border border-white/10 bg-white/[0.03] py-3 text-sm text-[#c7ccd3] transition-colors hover:bg-white/[0.06]"
                 >
                   Scan again
                 </button>
@@ -311,7 +399,7 @@ function App() {
         )}
 
         {screen === "connected" && machine && (
-          <div className="w-full max-w-md mx-auto px-5 pt-28 pb-14 space-y-6">
+          <div className="w-full max-w-md sm:max-w-xl md:max-w-3xl mx-auto px-5 sm:px-8 pt-28 md:pt-32 pb-14 space-y-6">
             <ConnectionStatus machine={machine} status={status} />
             <WorkspaceList workspaces={workspaces} />
             <RepositoryList
@@ -327,6 +415,12 @@ function App() {
             gitStatus={gitStatus}
             gitLog={gitLog}
             gitDiff={gitDiff}
+            gitPush={gitPush}
+              gitCommit={gitCommit}
+  isCommitting={isCommitting}
+            isPushing={isPushing}
+            onPush={handleGitPush}
+            onCommit={handleGitCommit}
             onRequestDiff={(filePath) => {
               setGitDiff(null);
 
@@ -335,7 +429,6 @@ function App() {
                 filePath
               );
             }}
-
             onBack={handleBackToRepositories}
           />
         )}
