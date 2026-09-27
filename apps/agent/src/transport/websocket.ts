@@ -17,7 +17,14 @@ export function connectToRelay(
     pairingToken: string,
     machine: AgentRegisterMessage["machine"]
 ) {
-    const socket = new WebSocket("ws://localhost:8080");
+    
+    let socket: WebSocket;
+    const RELAY_URL = process.env.REMOTE_GIT_RELAY_URL ?? "ws://localhost:8080";
+    const connect = ()=>{
+        socket = new WebSocket(RELAY_URL);
+
+        
+    
 
     socket.on("open", () => {
         console.log("✅ Connected to relay");
@@ -33,6 +40,7 @@ export function connectToRelay(
 
         socket.send(JSON.stringify(message));
     });
+    
 
     socket.on("message", async (data) => {
         const message = JSON.parse(data.toString());
@@ -286,14 +294,18 @@ export function connectToRelay(
             return;
         }
     });
+            socket.on("close", () => {
+            console.log("🔌 Relay connection closed. Reconnecting in 3 seconds...");
 
-    socket.on("close", () => {
-        console.log("❌ Relay connection closed");
-    });
+            setTimeout(() => {
+                connect();
+            }, 3000);
+        });
 
-    socket.on("error", (error) => {
-        console.error("⚠️ WebSocket error:", error.message);
-    });
+        socket.on("error", (error) => {
+            console.error("❌ WebSocket error:", error.message);
+        });
+    };
 
-    return socket;
+    connect();
 }

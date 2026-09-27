@@ -1,5 +1,5 @@
 import { getMachineInfo } from "./machine/machine-info.js";
-import { generateDeviceId } from "./core/config.js";
+import { getOrCreateDeviceId } from "./core/config.js";
 import { connectToRelay } from "./transport/websocket.js";
 import { generatePairingToken } from "./pairing/token.js";
 import type { PairingInfo } from "@remote-git/protocol";
@@ -15,7 +15,7 @@ console.log(" Remote Git Agent Starting..\n");
 console.log("🚀 Remote Git Agent starting...\n");
 
 const machine = getMachineInfo();
-const deviceId = generateDeviceId();
+const deviceId = await getOrCreateDeviceId();
 const pairingToken = generatePairingToken();
 
 const pairingInfo: PairingInfo = {

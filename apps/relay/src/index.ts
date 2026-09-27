@@ -1,9 +1,7 @@
 import { WebSocketServer } from "ws";
 import { registerConnection, removeConnection, getConnection, validatePairingToken, attachPhone, getConnectionBySocket, getConnectionByPhoneSocket } from "./connections.js";
 
-
-const PORT = 8080;
-
+const PORT = Number(process.env.PORT) || 8080;
 const wss = new WebSocketServer({
     port: PORT,
 });

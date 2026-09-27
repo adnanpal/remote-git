@@ -1,5 +1,40 @@
 import crypto from "node:crypto";
+import fs from "node:fs/promises";
+import path from "node:path";
+import os from "node:os";
 
-export function generateDeviceId(): string {
-    return `dev_${crypto.randomUUID()}`;
+const REMOTE_GIT_DIR = path.join(os.homedir(), ".remote-git");
+const IDENTITY_FILE = path.join(REMOTE_GIT_DIR, "identity.json");
+
+interface DeviceIdentity {
+  deviceId: string;
+  createdAt: string;
+}
+
+export async function getOrCreateDeviceId(): Promise<string> {
+  try {
+    const raw = await fs.readFile(IDENTITY_FILE, "utf-8");
+    const identity = JSON.parse(raw) as DeviceIdentity;
+
+    if (identity.deviceId) {
+      return identity.deviceId;
+    }
+  } catch {
+    // Identity doesn't exist yet — create it below.
+  }
+
+  await fs.mkdir(REMOTE_GIT_DIR, { recursive: true });
+
+  const identity: DeviceIdentity = {
+    deviceId: `dev_${crypto.randomUUID()}`,
+    createdAt: new Date().toISOString(),
+  };
+
+  await fs.writeFile(
+    IDENTITY_FILE,
+    JSON.stringify(identity, null, 2),
+    "utf-8"
+  );
+
+  return identity.deviceId;
 }
