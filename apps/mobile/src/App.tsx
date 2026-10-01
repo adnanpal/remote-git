@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { connectToRelay } from "./services/relay";
 import type { MachineInfoMessage, GitRepository, Workspace, GitStatusResponseMessage, GitCommit, GitDiffResponseMessage, GitPushResponseMessage, GitCommitResponseMessage } from "@remote-git/protocol";
+import type { Session } from "@supabase/supabase-js";
+import { supabase } from "./lib/supabaseClient";
 
 import LandingPage from "./components/LandingPage";
 import QRScanner from "./components/QRScanner";
@@ -11,6 +13,8 @@ import RepositoryList from "./components/Repositorylist";
 import RepositoryDashboard from "./components/Repositorydashboard";
 import Navbar from "./components/Navbar";
 import BackgroundDecor from "./components/Backgounddecor";
+import Login from "./components/auth/Login";
+import Signup from "./components/auth/signup";
 
 type PairingInfo = {
   version: number;
@@ -18,6 +22,8 @@ type PairingInfo = {
   pairingToken: string;
   relay: string;
 };
+
+type AuthMode = "login" | "signup" | null;
 
 function App() {
 
@@ -58,6 +64,27 @@ function App() {
   const [error, setError] = useState("");
 
   const scannerRef = useRef<Html5Qrcode | null>(null);
+
+  // Supabase auth — gates the "Connect your repository" button. Scanning
+  // never starts until a session exists.
+  const [session, setSession] = useState<Session | null>(null);
+  const [authMode, setAuthMode] = useState<AuthMode>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+    });
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_event, newSession) => {
+        setSession(newSession);
+      }
+    );
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   const startScanner = async () => {
     console.log("📷 Starting QR scanner...");
@@ -246,6 +273,17 @@ function App() {
     }
   };
 
+  // Entry point for the landing page's CTA. Requires a Supabase session —
+  // if there isn't one yet, show the login screen instead of the scanner.
+  // The scanner only ever starts from here or from Login's onSuccess.
+  const handleConnectClick = () => {
+    if (session) {
+      startScanner();
+    } else {
+      setAuthMode("login");
+    }
+  };
+
   // Lets the user back out of the scanner screen. Additive only —
   // does not change the pairing/relay logic above.
   const cancelScanning = async () => {
@@ -358,20 +396,34 @@ function App() {
   return (
     <div className="relative min-h-screen bg-[#05070a] text-[#eef1f4]">
       <BackgroundDecor />
-      {screen !== "landing" && (
+      {screen !== "landing" && !authMode && (
         <Navbar connected={!!machine} hostname={machine?.hostname} />
       )}
 
       <main className="relative">
-        {screen === "landing" && (
-          <LandingPage onScan={startScanner} error={error} />
+        {authMode === "login" && (
+          <Login
+            onSuccess={() => {
+              setAuthMode(null);
+              startScanner();
+            }}
+            onSwitchToSignup={() => setAuthMode("signup")}
+          />
         )}
 
-        {screen === "scanning" && (
+        {authMode === "signup" && (
+          <Signup onSwitchToLogin={() => setAuthMode("login")} />
+        )}
+
+        {!authMode && screen === "landing" && (
+          <LandingPage onScan={handleConnectClick} error={error} />
+        )}
+
+        {!authMode && screen === "scanning" && (
           <QRScanner onCancel={cancelScanning} error={error} />
         )}
 
-        {screen === "connecting" && (
+        {!authMode && screen === "connecting" && (
           <div className="w-full max-w-md mx-auto px-5 pt-28 pb-14 animate-fade-in-up">
             <div className="rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-6">
               <p className="text-xs font-medium tracking-[.14em] text-[#39e08a] uppercase mb-3 font-mono">
@@ -398,7 +450,7 @@ function App() {
           </div>
         )}
 
-        {screen === "connected" && machine && (
+        {!authMode && screen === "connected" && machine && (
           <div className="w-full max-w-md sm:max-w-xl md:max-w-3xl mx-auto px-5 sm:px-8 pt-28 md:pt-32 pb-14 space-y-6">
             <ConnectionStatus machine={machine} status={status} />
             <WorkspaceList workspaces={workspaces} />
@@ -409,7 +461,7 @@ function App() {
           </div>
         )}
 
-        {screen === "repository" && selectedRepository && (
+        {!authMode && screen === "repository" && selectedRepository && (
           <RepositoryDashboard
             repository={selectedRepository}
             gitStatus={gitStatus}
