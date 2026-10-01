@@ -1,10 +1,14 @@
 const connections = new Map();
 export function registerConnection(deviceId, socket, pairingToken) {
+    const previous = connections.get(deviceId);
+    const tokenChanged = !!previous && previous.pairingToken !== pairingToken;
     connections.set(deviceId, {
         socket,
         pairingToken,
+        phone: tokenChanged ? undefined : previous?.phone,
     });
     console.log(`🔗 Registered connection: ${deviceId}`);
+    return { tokenChanged, previousPhone: tokenChanged ? previous?.phone : undefined };
 }
 export function getConnection(deviceId) {
     return connections.get(deviceId);
@@ -49,7 +53,26 @@ export function getConnectionByPhoneSocket(socket) {
     }
     return undefined;
 }
-export function removeConnection(deviceId) {
-    connections.delete(deviceId);
-    console.log(`❌ Removed connection: ${deviceId}`);
+export function sendToDevice(deviceId, message) {
+    const connection = connections.get(deviceId);
+    if (!connection?.socket) {
+        console.log(`⚠️ Device offline: ${deviceId}`);
+        return false;
+    }
+    connection.socket.send(JSON.stringify(message));
+    return true;
+}
+export function removeConnection(deviceId, socket) {
+    const connection = connections.get(deviceId);
+    if (!connection) {
+        return;
+    }
+    // Ignore a stale socket closing after a newer connection
+    // has already replaced it.
+    if (connection.socket !== socket) {
+        console.log(`⚠️ Ignoring stale socket: ${deviceId}`);
+        return;
+    }
+    connection.socket = undefined;
+    console.log(`🔌 Device disconnected: ${deviceId}`);
 }

@@ -1,0 +1,9 @@
+<!doctype html><html lang="en"><body><template>
+<style>#comp-scene-commit{position:absolute;inset:0;width:100%;height:100%;overflow:hidden}</style>
+<div id="comp-scene-commit" class="film-root" data-composition-id="scene-commit" data-width="1920" data-height="1080" data-duration="3">
+  <div class="film-content commit-layout"><div class="scene-copy" id="commit-copy"><p class="film-kicker">COMMIT / 06</p><h1 class="film-headline">Commit from<br>anywhere.</h1><p class="film-copy">Stage it. Name it. Commit.</p></div>
+    <div class="commit-phone" id="commit-phone"><p class="film-kicker">REMOTE-GIT &nbsp; / &nbsp; main</p><p class="commit-stage">&#10003; &nbsp; 3 files staged</p><p class="film-muted film-mono">COMMIT MESSAGE</p><div class="commit-input">add remote git controls</div><div class="commit-button" id="commit-button">COMMIT</div><div class="commit-result" id="commit-result"><span class="film-green">8f32a1c</span><br>add remote git controls</div></div>
+  </div>
+</div>
+<script>(function(){var tl=gsap.timeline({paused:true});tl.fromTo("#commit-copy",{opacity:0,x:-26},{opacity:1,x:0,duration:.38,ease:"power3.out"},.16);tl.fromTo("#commit-phone",{opacity:0,y:30},{opacity:1,y:0,duration:.42,ease:"power2.out"},.24);tl.to("#commit-button",{scale:.96,duration:.12,ease:"power2.in"},1.12);tl.to("#commit-button",{scale:1,duration:.18,ease:"back.out(1.4)"},1.26);tl.fromTo("#commit-result",{opacity:0,y:12},{opacity:1,y:0,duration:.35,ease:"power3.out"},1.55);window.__timelines["scene-commit"]=tl;})();</script>
+</template></body></html>

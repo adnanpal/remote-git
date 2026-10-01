@@ -1,0 +1,15 @@
+{
+  "duration": 27,
+  "assertions": [
+    { "kind": "appearsBy", "selector": "#desk-first", "bySec": 1.1 },
+    { "kind": "appearsBy", "selector": "#agent-title", "bySec": 5.5 },
+    { "kind": "appearsBy", "selector": "#pair-connected", "bySec": 9.9 },
+    { "kind": "appearsBy", "selector": "#repo-selected", "bySec": 13.4 },
+    { "kind": "appearsBy", "selector": "#diff-panel", "bySec": 15.5 },
+    { "kind": "appearsBy", "selector": "#commit-result", "bySec": 19.4 },
+    { "kind": "appearsBy", "selector": "#push-success", "bySec": 23.2 },
+    { "kind": "appearsBy", "selector": "#launch-lockup", "bySec": 24.4 },
+    { "kind": "before", "a": "#desk-first", "b": "#agent-title" },
+    { "kind": "staysInFrame", "selector": "#launch-lockup" }
+  ]
+}

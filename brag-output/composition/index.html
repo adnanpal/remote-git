@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <meta name="description" content="Remote-Git launch film">
+    <title>Remote-Git — Control your code remotely</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #05070a;
+      }
+
+      #root {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        color: #eef1f4;
+        font-family: Montserrat, sans-serif;
+      }
+
+      .ambient-grid,
+      .ambient-glow {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .ambient-grid {
+        opacity: 0.12;
+        background-image: linear-gradient(rgba(57, 224, 138, 0.11) 1px, transparent 1px), linear-gradient(90deg, rgba(57, 224, 138, 0.11) 1px, transparent 1px);
+        background-size: 72px 72px;
+        mask-image: radial-gradient(ellipse at 62% 46%, #000 0%, transparent 76%);
+      }
+
+      .ambient-glow {
+        inset: auto;
+        width: 900px;
+        height: 900px;
+        left: 700px;
+        top: 90px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(57, 224, 138, 0.18), rgba(57, 224, 138, 0) 68%);
+        filter: blur(18px);
+        opacity: 0.56;
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        padding: 100px 112px;
+        display: flex;
+        align-items: center;
+      }
+
+      .scene-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
+
+      .eyebrow,
+      .mono,
+      .micro {
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      .eyebrow {
+        color: #39e08a;
+        font-size: 21px;
+        line-height: 1.2;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .headline {
+        color: #eef1f4;
+        font-size: 98px;
+        line-height: 1.02;
+        font-weight: 700;
+      }
+
+      .support {
+        color: #a6afb9;
+        font-size: 31px;
+        line-height: 1.35;
+        font-weight: 400;
+      }
+
+      .hook-copy {
+        position: absolute;
+        left: 0;
+        top: 162px;
+        width: 825px;
+        z-index: 2;
+      }
+
+      .hook-copy .eyebrow { margin-bottom: 24px; }
+      .hook-copy .headline { font-size: 106px; }
+
+      .hook-line { display: block; }
+
+      .device-pair {
+        position: absolute;
+        right: 0;
+        top: 166px;
+        width: 970px;
+        height: 660px;
+      }
+
+      .laptop-device {
+        position: absolute;
+        left: 10px;
+        top: 30px;
+        width: 740px;
+        height: 480px;
+      }
+
+      .laptop-screen {
+        position: absolute;
+        inset: 0 0 35px;
+        padding: 30px 34px;
+        border: 2px solid rgba(238, 241, 244, 0.22);
+        border-radius: 20px 20px 12px 12px;
+        background: #0b0f14;
+        box-shadow: 0 40px 100px rgba(0, 0, 0, 0.48), 0 0 52px rgba(57, 224, 138, 0.08);
+      }
+
+      .terminal-bar,
+      .panel-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #9aa4af;
+      }
+
+      .terminal-bar { font-size: 22px; }
+
+      .terminal-dots { display: flex; gap: 9px; }
+
+      .terminal-dots i {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: #3a424b;
+      }
+
+      .terminal-code {
+        margin-top: 54px;
+        color: #c7d0d8;
+        font: 24px/1.8 "JetBrains Mono", monospace;
+      }
+
+      .terminal-code .green { color: #39e08a; }
+
+      .laptop-base {
+        position: absolute;
+        left: -30px;
+        right: -30px;
+        bottom: 0;
+        height: 26px;
+        border-radius: 3px 3px 16px 16px;
+        background: linear-gradient(180deg, #707982, #252b32 60%, #11151a);
+        box-shadow: 0 14px 24px rgba(0, 0, 0, 0.42);
+      }
+
+      .laptop-base::after {
+        content: "";
+        position: absolute;
+        left: 42%;
+        width: 16%;
+        height: 5px;
+        border-radius: 0 0 8px 8px;
+        background: #14191e;
+      }
+
+      .phone-device {
+        position: absolute;
+        right: 5px;
+        top: 138px;
+        width: 296px;
+        height: 514px;
+        padding: 12px;
+        border: 2px solid rgba(238, 241, 244, 0.32);
+        border-radius: 40px;
+        background: #11161c;
+        box-shadow: 0 32px 90px rgba(0, 0, 0, 0.55), 0 0 42px rgba(57, 224, 138, 0.12);
+      }
+
+      .phone-screen {
+        height: 100%;
+        padding: 44px 21px 22px;
+        border-radius: 29px;
+        background: #070a0e;
+        overflow: hidden;
+      }
+
+      .phone-topline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #eef1f4;
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .live-pill {
+        color: #39e08a;
+        font: 16px "JetBrains Mono", monospace;
+      }
+
+      .phone-file {
+        margin-top: 28px;
+        padding: 15px 0;
+        border-top: 1px dashed rgba(238, 241, 244, 0.15);
+        color: #bdc5cd;
+        font: 17px "JetBrains Mono", monospace;
+        white-space: nowrap;
+      }
+
+      .phone-file::before { content: "M  "; color: #f5b95e; }
+
+      .pair-line {
+        position: absolute;
+        left: 632px;
+        top: 329px;
+        width: 220px;
+        height: 4px;
+        transform-origin: left center;
+        background: #39e08a;
+        box-shadow: 0 0 26px rgba(57, 224, 138, 0.85);
+      }
+
+      .scene-label {
+        position: absolute;
+        right: 22px;
+        bottom: 7px;
+        color: #7e8994;
+        font: 17px "JetBrains Mono", monospace;
+      }
+
+      .pair-layout,
+      .diff-layout,
+      .push-layout {
+        display: grid;
+        align-items: center;
+        height: 100%;
+        gap: 76px;
+      }
+
+      .pair-layout { grid-template-columns: 700px 1fr; }
+      .diff-layout { grid-template-columns: 650px 1fr; gap: 54px; }
+      .push-layout { grid-template-columns: 650px 1fr; gap: 54px; }
+
+      .scene-copy .eyebrow { margin-bottom: 23px; }
+      .scene-copy .headline { font-size: 86px; }
+      .scene-copy .support { margin-top: 30px; max-width: 600px; }
+
+      .terminal-card,
+      .phone-card,
+      .diff-card,
+      .push-card {
+        border: 1px solid rgba(238, 241, 244, 0.16);
+        border-radius: 20px;
+        background: rgba(11, 15, 20, 0.96);
+        box-shadow: 0 34px 90px rgba(0, 0, 0, 0.42);
+      }
+
+      .pair-right {
+        display: grid;
+        grid-template-columns: 405px 1fr;
+        align-items: center;
+        gap: 26px;
+      }
+
+      .terminal-card { padding: 28px; }
+      .terminal-card .terminal-bar { font-size: 18px; }
+
+      .terminal-rows {
+        margin-top: 30px;
+        color: #c7d0d8;
+        font: 19px/1.8 "JetBrains Mono", monospace;
+      }
+
+      .terminal-rows .green { color: #39e08a; }
+
+      .pair-phone {
+        width: 320px;
+        min-height: 446px;
+        padding: 28px 25px;
+        border: 2px solid rgba(238, 241, 244, 0.2);
+        border-radius: 39px;
+        background: #090d11;
+      }
+
+      .pair-mark {
+        width: 124px;
+        height: 124px;
+        margin: 14px auto 24px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(4, 1fr);
+        gap: 8px;
+        transform: rotate(-6deg);
+      }
+
+      .pair-mark i { background: #39e08a; border-radius: 2px; }
+      .pair-mark i:nth-child(2n) { opacity: 0.28; }
+      .pair-mark i:nth-child(3n) { opacity: 0; }
+
+      .pair-caption {
+        color: #9aa4af;
+        text-align: center;
+        font: 16px "JetBrains Mono", monospace;
+      }
+
+      .auth-row {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        margin-top: 27px;
+        color: #dce3e8;
+        font-size: 18px;
+        line-height: 1.35;
+      }
+
+      .auth-check {
+        width: 25px;
+        height: 25px;
+        flex: none;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: rgba(57, 224, 138, 0.16);
+        color: #39e08a;
+        font-size: 16px;
+      }
+
+      .diff-card { overflow: hidden; }
+
+      .diff-topbar {
+        min-height: 70px;
+        padding: 0 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid rgba(238, 241, 244, 0.12);
+        color: #a6afb9;
+        font: 20px "JetBrains Mono", monospace;
+      }
+
+      .diff-branch { color: #39e08a; }
+
+      .diff-path {
+        padding: 25px 30px 19px;
+        color: #eef1f4;
+        font: 20px "JetBrains Mono", monospace;
+      }
+
+      .diff-lines {
+        padding: 0 20px 27px;
+        color: #c7d0d8;
+        font: 24px/1.7 "JetBrains Mono", monospace;
+      }
+
+      .diff-line { display: block; white-space: nowrap; padding: 2px 12px; }
+      .diff-context { color: #a6afb9; }
+      .diff-delete { color: #ff9b91; background: rgba(255, 107, 107, 0.13); }
+      .diff-add { color: #64e9a0; background: rgba(57, 224, 138, 0.13); }
+      .diff-sign { display: inline-block; width: 33px; font-weight: 700; }
+
+      .file-count {
+        margin-left: 8px;
+        color: #f5b95e;
+        font: 19px "JetBrains Mono", monospace;
+      }
+
+      .push-card { padding: 30px; }
+
+      .push-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 23px;
+        border-bottom: 1px solid rgba(238, 241, 244, 0.12);
+      }
+
+      .push-repo { color: #eef1f4; font-size: 24px; font-weight: 700; }
+      .push-branch { margin-top: 8px; color: #39e08a; font: 17px "JetBrains Mono", monospace; }
+
+      .clean-state {
+        padding: 8px 13px;
+        border: 1px solid rgba(57, 224, 138, 0.4);
+        border-radius: 99px;
+        color: #39e08a;
+        font: 15px "JetBrains Mono", monospace;
+      }
+
+      .commit-label {
+        margin-top: 24px;
+        color: #8b95a1;
+        font: 16px "JetBrains Mono", monospace;
+      }
+
+      .commit-message {
+        margin-top: 9px;
+        padding: 15px 16px;
+        border: 1px solid rgba(238, 241, 244, 0.16);
+        border-radius: 9px;
+        color: #eef1f4;
+        font: 18px "JetBrains Mono", monospace;
+      }
+
+      .push-button {
+        margin-top: 20px;
+        padding: 17px;
+        border: 1px solid rgba(57, 224, 138, 0.45);
+        border-radius: 10px;
+        background: rgba(57, 224, 138, 0.12);
+        color: #39e08a;
+        text-align: center;
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      .push-success {
+        margin-top: 18px;
+        padding: 15px 16px;
+        border: 1px solid rgba(57, 224, 138, 0.3);
+        border-radius: 9px;
+        background: rgba(57, 224, 138, 0.08);
+        color: #64e9a0;
+        font: 16px "JetBrains Mono", monospace;
+      }
+
+      .brand-lockup {
+        position: absolute;
+        left: 0;
+        bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 17px;
+      }
+
+      .brand-mark {
+        width: 52px;
+        height: 52px;
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        background: #39e08a;
+        color: #04140b;
+        font: 700 26px "JetBrains Mono", monospace;
+      }
+
+      .brand-name { color: #eef1f4; font-size: 33px; font-weight: 700; }
+
+      .privacy-line {
+        position: absolute;
+        right: 0;
+        bottom: 7px;
+        color: #dce3e8;
+        font-size: 27px;
+        font-weight: 700;
+      }
+
+      .final-caption {
+        position: absolute;
+        left: 0;
+        bottom: 106px;
+        color: #39e08a;
+        font: 18px "JetBrains Mono", monospace;
+        text-transform: uppercase;
+      }
+
+      .hidden-initial { opacity: 0; }
+
+      @media (max-width: 1920px) {
+        html, body { width: 1920px; height: 1080px; }
+      }
+
+      .trailer-host { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: #05070a; }
+      .film-root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; color: #eef1f4; font-family: Montserrat, sans-serif; background: #05070a; }
+      .film-root::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .14; background-image: linear-gradient(rgba(57,224,138,.11) 1px,transparent 1px),linear-gradient(90deg,rgba(57,224,138,.11) 1px,transparent 1px); background-size: 72px 72px; mask-image: radial-gradient(ellipse at 60% 48%,#000,transparent 78%); }
+      .film-root::after { content: ""; position: absolute; width: 860px; height: 860px; right: -180px; top: -260px; border-radius: 50%; pointer-events: none; background: radial-gradient(circle,rgba(57,224,138,.17),rgba(57,224,138,0) 68%); }
+      .film-content { position: absolute; inset: 82px 112px; z-index: 1; }
+      .film-kicker { color: #39e08a; font: 700 20px/1.2 "JetBrains Mono",monospace; text-transform: uppercase; }
+      .film-headline { color: #eef1f4; font-size: 76px; line-height: 1.05; font-weight: 700; }
+      .film-copy { color: #aab3bd; font-size: 28px; line-height: 1.35; }
+      .film-mono { font-family: "JetBrains Mono",monospace; }
+      .film-terminal { border: 1px solid rgba(238,241,244,.17); border-radius: 15px; background: #090d12; box-shadow: 0 32px 90px rgba(0,0,0,.48),0 0 42px rgba(57,224,138,.06); overflow: hidden; }
+      .film-terminal-bar { min-height: 54px; padding: 0 22px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(238,241,244,.11); color: #a6afb9; font: 18px "JetBrains Mono",monospace; }
+      .film-dots { display: flex; gap: 8px; }
+      .film-dots i { width: 11px; height: 11px; border-radius: 50%; background: #505963; }
+      .film-terminal-body { padding: 22px 26px; color: #c9d1d8; font: 21px/1.7 "JetBrains Mono",monospace; }
+      .film-green { color: #39e08a; }
+      .film-red { color: #ff8d83; }
+      .film-warm { color: #f5b95e; }
+      .film-muted { color: #86919c; }
+      .desk-layout { display: grid; grid-template-columns: 710px 1fr; align-items: center; gap: 68px; }
+      .desk-copy { position: relative; z-index: 3; }
+      .desk-copy .film-kicker { margin-bottom: 22px; }
+      .desk-copy .film-headline { font-size: 75px; max-width: 690px; }
+      .desk-second-line { position: absolute; inset: 45px 0 auto; opacity: 0; }
+      .desk-scene { position: relative; height: 690px; }
+      .desk-terminal { position: absolute; top: 78px; right: 0; width: 850px; height: 436px; z-index: 2; }
+      .desk-terminal .film-terminal-body { padding-top: 29px; font-size: 19px; }
+      .desk-row { display: block; white-space: nowrap; }
+      .desk-person { position: absolute; width: 360px; height: 530px; right: 485px; bottom: 42px; opacity: .72; }
+      .person-head { position: absolute; top: 15px; right: 92px; width: 136px; height: 155px; border-radius: 48% 46% 44% 48%; background: #343d43; box-shadow: inset -20px -5px 0 #242c31; }
+      .person-body { position: absolute; right: 0; bottom: 0; width: 340px; height: 390px; border-radius: 180px 180px 20px 20px; background: linear-gradient(135deg,#252e34,#11171c); }
+      .desk-plane { position: absolute; left: -50px; right: -30px; bottom: 78px; height: 28px; border-radius: 4px; background: linear-gradient(#7c858a,#30383d 48%,#141a1e); box-shadow: 0 25px 40px rgba(0,0,0,.5); z-index: 4; }
+      .desk-laptop-base { position: absolute; right: 78px; bottom: 48px; width: 650px; height: 22px; border-radius: 3px 3px 14px 14px; background: linear-gradient(#848c91,#363d42 60%,#151b20); z-index: 5; }
+      .desk-phone { position: absolute; right: 100px; bottom: 95px; width: 202px; height: 360px; padding: 10px; border: 2px solid #717c83; border-radius: 31px; background: #10161b; z-index: 6; box-shadow: 0 22px 60px rgba(0,0,0,.5); }
+      .desk-phone-screen { height: 100%; padding: 38px 13px 12px; border-radius: 21px; background: #070a0d; color: #d9e0e5; font: 13px/1.65 "JetBrains Mono",monospace; }
+      .desk-phone-brand { color: #39e08a; font-weight: 700; }
+      .desk-wire { position: absolute; right: 278px; bottom: 293px; width: 206px; height: 3px; transform-origin: right; background: #39e08a; box-shadow: 0 0 18px rgba(57,224,138,.8); z-index: 7; }
+      .agent-layout,.scan-layout,.repo-layout,.diff-layout,.commit-layout,.push-layout { display: grid; align-items: center; gap: 72px; }
+      .agent-layout { grid-template-columns: 690px 1fr; }
+      .agent-copy .film-kicker,.scene-copy .film-kicker { margin-bottom: 22px; }
+      .agent-copy .film-headline,.scene-copy .film-headline { font-size: 82px; }
+      .agent-copy .film-copy,.scene-copy .film-copy { margin-top: 28px; max-width: 620px; }
+      .agent-terminal { width: 850px; }
+      .agent-terminal .film-terminal-body { padding: 32px; font-size: 23px; }
+      .agent-prompt { display: block; margin: 7px 0; }
+      .agent-caret { display: inline-block; width: 11px; height: 24px; margin-left: 5px; vertical-align: -4px; background: #39e08a; }
+      .scan-layout { grid-template-columns: 650px 1fr; }
+      .scan-right { display: flex; align-items: center; justify-content: center; gap: 46px; }
+      .scan-terminal { width: 410px; }
+      .scan-terminal .film-terminal-body { min-height: 188px; padding: 27px; font-size: 20px; }
+      .scan-phone { position: relative; width: 318px; height: 544px; padding: 12px; border: 2px solid #69757d; border-radius: 42px; background: #11171c; box-shadow: 0 34px 90px rgba(0,0,0,.55); }
+      .scan-phone-screen { position: relative; height: 100%; overflow: hidden; border-radius: 29px; background: #080c10; }
+      .scan-camera { position: absolute; inset: 38px 22px 70px; border: 2px solid rgba(57,224,138,.48); border-radius: 16px; }
+      .scan-code { position: absolute; width: 208px; height: 208px; left: 41px; top: 86px; display: grid; grid-template-columns: repeat(8,1fr); grid-template-rows: repeat(8,1fr); gap: 5px; transform: rotate(-3deg); }
+      .scan-code i { border-radius: 2px; background: #39e08a; }
+      .scan-code i:nth-child(3n) { opacity: .25; }
+      .scan-code i:nth-child(5n) { opacity: 0; }
+      .scan-sweep { position: absolute; left: 5px; right: 5px; top: 0; height: 3px; background: #86ffc0; box-shadow: 0 0 20px #39e08a; }
+      .scan-caption { position: absolute; left: 0; right: 0; bottom: 25px; text-align: center; color: #b7c1c9; font: 16px "JetBrains Mono",monospace; }
+      .scan-connected { position: absolute; inset: 0; padding: 78px 28px; background: #080c10; }
+      .connected-dot { width: 13px; height: 13px; display: inline-block; border-radius: 50%; background: #39e08a; box-shadow: 0 0 16px #39e08a; }
+      .repo-layout { grid-template-columns: 590px 1fr; gap: 98px; }
+      .repo-phone { width: 820px; margin-left: auto; padding: 34px; border: 1px solid rgba(238,241,244,.18); border-radius: 28px; background: #090d12; box-shadow: 0 34px 90px rgba(0,0,0,.48); }
+      .repo-root-path { margin: 20px 0; color: #9ca8b1; font: 18px "JetBrains Mono",monospace; }
+      .repo-row { min-height: 70px; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(238,241,244,.1); color: #dce3e8; font: 22px "JetBrains Mono",monospace; }
+      .repo-row.selected { background: rgba(57,224,138,.1); color: #39e08a; }
+      .repo-footer { margin-top: 20px; color: #39e08a; font: 19px "JetBrains Mono",monospace; }
+      .film-cursor { position: absolute; width: 0; height: 0; border-top: 19px solid #eef1f4; border-right: 12px solid transparent; filter: drop-shadow(0 2px 6px #000); }
+      .repo-cursor { right: 228px; top: 344px; z-index: 3; }
+      .diff-layout { grid-template-columns: 520px 1fr; gap: 62px; }
+      .diff-phone { width: 430px; height: 742px; padding: 12px; border: 2px solid #68747c; border-radius: 44px; background: #10161b; box-shadow: 0 32px 82px rgba(0,0,0,.5); }
+      .diff-phone-screen { height: 100%; padding: 42px 21px 20px; border-radius: 31px; background: #070a0e; overflow: hidden; }
+      .mobile-brand { display: flex; justify-content: space-between; color: #eef1f4; font-size: 20px; font-weight: 700; }
+      .mobile-branch { margin-top: 15px; color: #39e08a; font: 18px "JetBrains Mono",monospace; }
+      .mobile-count { margin-top: 18px; color: #f5b95e; font: 17px "JetBrains Mono",monospace; }
+      .mobile-file { padding: 12px 0; border-top: 1px dashed rgba(238,241,244,.16); color: #c5cdd4; font: 15px "JetBrains Mono",monospace; white-space: nowrap; }
+      .view-changes { margin-top: 12px; padding: 16px; border: 1px solid rgba(57,224,138,.38); border-radius: 9px; color: #39e08a; text-align: center; font-size: 17px; font-weight: 700; }
+      .diff-screen { position: absolute; left: 1020px; top: 158px; width: 650px; padding: 22px; border: 1px solid rgba(238,241,244,.16); border-radius: 14px; background: #0a0e13; box-shadow: 0 26px 72px rgba(0,0,0,.5); }
+      .diff-screen-head { padding-bottom: 14px; border-bottom: 1px solid rgba(238,241,244,.12); color: #aeb8c0; font: 18px "JetBrains Mono",monospace; }
+      .diff-code { margin-top: 16px; color: #c9d1d8; font: 18px/1.8 "JetBrains Mono",monospace; white-space: nowrap; }
+      .diff-del { color: #ff9b91; background: rgba(255,107,107,.11); }
+      .diff-add { color: #64e9a0; background: rgba(57,224,138,.12); }
+      .commit-layout { grid-template-columns: 670px 1fr; }
+      .commit-phone { width: 670px; margin-left: auto; padding: 35px; border: 1px solid rgba(238,241,244,.18); border-radius: 25px; background: #090d12; box-shadow: 0 30px 80px rgba(0,0,0,.48); }
+      .commit-stage { padding: 14px 17px; color: #39e08a; font: 19px "JetBrains Mono",monospace; }
+      .commit-input { margin: 18px 0; padding: 18px; border: 1px solid rgba(238,241,244,.16); border-radius: 8px; color: #eef1f4; font: 20px "JetBrains Mono",monospace; }
+      .commit-button { padding: 20px; border-radius: 9px; background: #39e08a; color: #04140b; text-align: center; font: 700 24px "JetBrains Mono",monospace; }
+      .commit-result { margin-top: 18px; padding: 16px; border: 1px solid rgba(57,224,138,.28); border-radius: 9px; background: rgba(57,224,138,.08); color: #8effbf; font: 18px/1.45 "JetBrains Mono",monospace; }
+      .push-layout { grid-template-columns: 570px 1fr; gap: 65px; }
+      .push-route { position: relative; display: flex; flex-direction: column; gap: 18px; }
+      .route-item { min-height: 54px; padding: 12px 18px; display: flex; align-items: center; gap: 14px; border: 1px solid rgba(238,241,244,.16); border-radius: 9px; background: #090d12; color: #dce3e8; font: 19px "JetBrains Mono",monospace; }
+      .route-dot { width: 12px; height: 12px; flex: none; border-radius: 50%; background: #39e08a; box-shadow: 0 0 14px rgba(57,224,138,.65); }
+      .push-terminal { width: 870px; }
+      .push-terminal .film-terminal-body { min-height: 355px; padding: 25px 30px; font-size: 19px; }
+      .github-wordmark { color: #eef1f4; font-weight: 700; }
+      .final-layout { position: absolute; inset: 82px 112px; display: grid; place-items: center; text-align: center; }
+      .final-thesis { font-size: 77px; line-height: 1.12; font-weight: 700; }
+      .final-brand { margin-top: 31px; color: #eef1f4; font: 700 39px "JetBrains Mono",monospace; }
+      .final-tagline { margin-top: 13px; color: #adb7c0; font-size: 23px; }
+      .coming-soon { margin-top: 28px; color: #39e08a; font: 700 24px "JetBrains Mono",monospace; letter-spacing: .08em; }
+      .final-domain { margin-top: 8px; color: #89949e; font: 18px "JetBrains Mono",monospace; }
+      .final-pulse { position: absolute; right: 30px; bottom: 31px; width: 12px; height: 12px; border-radius: 50%; background: #39e08a; box-shadow: 0 0 20px rgba(57,224,138,.8); }
+      .legacy-scene { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <div data-hf-id="hf-3uxp" id="root" data-composition-id="main" data-start="0" data-duration="27" data-width="1920" data-height="1080">
+      <div data-hf-id="hf-0h3w" class="ambient-grid" data-layout-ignore=""></div>
+      <div data-hf-id="hf-xra3" class="ambient-glow" data-layout-ignore=""></div>
+      <div id="scene-desk" data-composition-id="scene-desk" data-composition-src="compositions/scene-desk.html" class="clip trailer-host" data-start="0" data-duration="5.05" data-track-index="0" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="scene-agent" data-composition-id="scene-agent" data-composition-src="compositions/scene-agent.html" class="clip trailer-host" data-start="4.8" data-duration="3.25" data-track-index="0" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="scene-pairing" data-composition-id="scene-pairing" data-composition-src="compositions/scene-pairing.html" class="clip trailer-host" data-start="7.8" data-duration="3.2" data-track-index="0" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="scene-project" data-composition-id="scene-project" data-composition-src="compositions/scene-project.html" class="clip trailer-host" data-start="10.8" data-duration="3.2" data-track-index="0" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="scene-changes" data-composition-id="scene-changes" data-composition-src="compositions/scene-changes.html" class="clip trailer-host" data-start="13.7" data-duration="3.95" data-track-index="0" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="scene-commit" data-composition-id="scene-commit" data-composition-src="compositions/scene-commit.html" class="clip trailer-host" data-start="17.4" data-duration="3" data-track-index="0" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="scene-push" data-composition-id="scene-push" data-composition-src="compositions/scene-push.html" class="clip trailer-host" data-start="20.1" data-duration="3.7" data-track-index="0" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="scene-launch" data-composition-id="scene-launch" data-composition-src="compositions/scene-launch.html" class="clip trailer-host" data-start="23.5" data-duration="3.5" data-track-index="0" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+
+      <section data-hf-id="hf-zb1g" id="scene-hook" class="legacy-scene" data-hidden="true">
+        <div data-hf-id="hf-97sb" class="scene-inner">
+          <div data-hf-id="hf-xc1l" class="hook-copy">
+            <p data-hf-id="hf-kfvi" class="eyebrow hook-kicker">Remote-Git / Local first</p>
+            <h1 data-hf-id="hf-9gje" class="headline hook-title">
+              <span data-hf-id="hf-7pjd" class="hook-line">Your code</span>
+              <span data-hf-id="hf-x2lc" class="hook-line">doesn't have to</span>
+              <span data-hf-id="hf-tsuj" class="hook-line">stay at your desk.</span>
+            </h1>
+          </div>
+
+          <div data-hf-id="hf-648z" class="device-pair">
+            <div data-hf-id="hf-25vv" class="laptop-device">
+              <div data-hf-id="hf-ify5" class="laptop-screen">
+                <div data-hf-id="hf-b8ww" class="terminal-bar">
+                  <span data-hf-id="hf-jc9m" class="terminal-dots"><i data-hf-id="hf-wt6k"></i><i data-hf-id="hf-zeb8"></i><i data-hf-id="hf-y7e5"></i></span>
+                  <span data-hf-id="hf-z03e" class="mono">remote-git — zsh</span>
+                  <span data-hf-id="hf-q426" class="micro">LOCAL</span>
+                </div>
+                <div data-hf-id="hf-xi02" class="terminal-code">
+                  <p data-hf-id="hf-31a4"><span data-hf-id="hf-rseq" class="green">$</span> remote-git start</p>
+                  <p data-hf-id="hf-t926" class="green">✓ Local agent started</p>
+                  <p data-hf-id="hf-99lj" class="green">✓ Repository detected</p>
+                  <p data-hf-id="hf-vmq7">Waiting for mobile connection…</p>
+                </div>
+              </div>
+              <div data-hf-id="hf-x2ca" class="laptop-base"></div>
+            </div>
+
+            <div data-hf-id="hf-pqca" class="pair-line" data-layout-ignore=""></div>
+
+            <div data-hf-id="hf-29d7" class="phone-device">
+              <div data-hf-id="hf-9o7x" class="phone-screen">
+                <div data-hf-id="hf-n62g" class="phone-topline"><span data-hf-id="hf-g35i">REMOTE-GIT</span><span data-hf-id="hf-rch8" class="live-pill">● LIVE</span></div>
+                <div data-hf-id="hf-vink" class="phone-file">src/server/relay.ts</div>
+                <div data-hf-id="hf-57xf" class="phone-file">src/GitPanel.tsx</div>
+                <div data-hf-id="hf-3fa7" class="phone-file">src/hooks/useGit.ts</div>
+              </div>
+            </div>
+          </div>
+          <p data-hf-id="hf-5w27" class="scene-label">LOCAL REPOSITORY / MOBILE CONTROL</p>
+        </div>
+      </section>
+
+      <section data-hf-id="hf-ioja" id="scene-pair" class="legacy-scene" data-hidden="true">
+        <div data-hf-id="hf-9y1w" class="scene-inner pair-layout">
+          <div data-hf-id="hf-q1bw" class="scene-copy pair-copy">
+            <p data-hf-id="hf-9oky" class="eyebrow">01 / Pair</p>
+            <h2 data-hf-id="hf-8jya" class="headline">Pair once.<br data-hf-id="hf-x5px">Keep working.</h2>
+            <p data-hf-id="hf-8kl8" class="support">Your phone connects to the agent already running on your laptop.</p>
+          </div>
+
+          <div data-hf-id="hf-xpml" class="pair-right">
+            <div data-hf-id="hf-wai6" class="terminal-card pair-terminal">
+              <div data-hf-id="hf-sj4o" class="terminal-bar">
+                <span data-hf-id="hf-v5ry" class="terminal-dots"><i data-hf-id="hf-ylp6"></i><i data-hf-id="hf-0l8b"></i><i data-hf-id="hf-0zjc"></i></span>
+                <span data-hf-id="hf-9zfu" class="mono">local agent</span>
+              </div>
+              <div data-hf-id="hf-hlie" class="terminal-rows">
+                <p data-hf-id="hf-qo50"><span data-hf-id="hf-oceu" class="green">$</span> remote-git start</p>
+                <p data-hf-id="hf-v0l1" class="green pair-status-one">✓ Agent started</p>
+                <p data-hf-id="hf-1hg1" class="pair-wait">Waiting for phone…</p>
+                <p data-hf-id="hf-94eo" class="green pair-status-two">✓ Device authenticated</p>
+                <p data-hf-id="hf-6bpc" class="green pair-status-three">✓ Secure session established</p>
+              </div>
+            </div>
+
+            <div data-hf-id="hf-9bfg" class="pair-phone pair-device">
+              <p data-hf-id="hf-2sxy" class="eyebrow" style="font-size: 16px; text-align: center;">SCAN TO PAIR</p>
+              <div data-hf-id="hf-7mop" class="pair-mark" aria-hidden="true">
+                <i data-hf-id="hf-zsm9"></i><i data-hf-id="hf-06xa"></i><i data-hf-id="hf-26gf"></i><i data-hf-id="hf-2krg"></i><i data-hf-id="hf-oz7w"></i><i data-hf-id="hf-okwv"></i><i data-hf-id="hf-o6lu"></i><i data-hf-id="hf-jqbp"></i>
+                <i data-hf-id="hf-qkg0"></i><i data-hf-id="hf-q64z"></i><i data-hf-id="hf-prty"></i><i data-hf-id="hf-pdix"></i><i data-hf-id="hf-hqsk"></i><i data-hf-id="hf-hchj"></i><i data-hf-id="hf-8d0n"></i><i data-hf-id="hf-8rbo"></i>
+              </div>
+              <p data-hf-id="hf-nd7s" class="pair-caption">DEVICE PAIRING</p>
+              <div data-hf-id="hf-4jsr" class="auth-row pair-confirm-one"><span data-hf-id="hf-tj2t" class="auth-check">✓</span><span data-hf-id="hf-smnk">Device authenticated</span></div>
+              <div data-hf-id="hf-bk89" class="auth-row pair-confirm-two"><span data-hf-id="hf-y2a1" class="auth-check">✓</span><span data-hf-id="hf-7z3a">Secure session established</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section data-hf-id="hf-ab6a" id="scene-diff" class="legacy-scene" data-hidden="true">
+        <div data-hf-id="hf-6von" class="scene-inner diff-layout">
+          <div data-hf-id="hf-m4l7" class="scene-copy diff-copy">
+            <p data-hf-id="hf-n6cz" class="eyebrow">02 / Inspect</p>
+            <h2 data-hf-id="hf-4h9y" class="headline">See what<br data-hf-id="hf-rsrt">changed.</h2>
+            <p data-hf-id="hf-xny1" class="support">Without opening your laptop.</p>
+          </div>
+
+          <div data-hf-id="hf-vdwo" class="diff-card diff-panel">
+            <div data-hf-id="hf-vk4y" class="diff-topbar"><span data-hf-id="hf-sudy">remote-git</span><span data-hf-id="hf-kwcn" class="diff-branch">⎇ main</span></div>
+            <div data-hf-id="hf-jw74" class="diff-path">src/server/relay.ts <span data-hf-id="hf-tiyc" class="file-count">M</span></div>
+            <div data-hf-id="hf-cuvh" class="diff-lines" aria-label="Example Git diff">
+              <span data-hf-id="hf-e6s8" class="diff-line diff-context">function connect(pairing: PairingInfo) {</span>
+              <span data-hf-id="hf-szas" class="diff-line diff-delete"><span data-hf-id="hf-7mj4" class="diff-sign">−</span>const relay = createRelay(pairing);</span>
+              <span data-hf-id="hf-kcfk" class="diff-line diff-add"><span data-hf-id="hf-hgmj" class="diff-sign">+</span>const relay = connectToRelay(pairing, handlers);</span>
+              <span data-hf-id="hf-tae2" class="diff-line diff-context">  return relay;</span>
+              <span data-hf-id="hf-fgml" class="diff-line diff-context">}</span>
+            </div>
+          </div>
+          <p data-hf-id="hf-1zyd" class="scene-label">STATUS / CHANGES / COMMITS</p>
+        </div>
+      </section>
+
+      <section data-hf-id="hf-hqih" id="scene-push" class="legacy-scene" data-hidden="true">
+        <div data-hf-id="hf-s60g" class="scene-inner push-layout">
+          <div data-hf-id="hf-6p6s" class="scene-copy push-copy">
+            <p data-hf-id="hf-fn2d" class="eyebrow">03 / Control</p>
+            <h2 data-hf-id="hf-k7qu" class="headline push-title">Commit and<br data-hf-id="hf-szow">push.</h2>
+            <p data-hf-id="hf-r80f" class="support push-support">Your local Git workflow, within reach.</p>
+            <div data-hf-id="hf-xgju" class="final-claim hidden-initial">
+              <p data-hf-id="hf-1wu9" class="eyebrow">LOCAL-FIRST BY DESIGN</p>
+              <h2 data-hf-id="hf-i8lx" class="headline" style="font-size: 76px; margin-top: 25px;">Your repository<br data-hf-id="hf-sldv">stays yours.</h2>
+            </div>
+          </div>
+
+          <div data-hf-id="hf-ue9k" class="push-card push-panel">
+            <div data-hf-id="hf-w7v2" class="push-header">
+              <div data-hf-id="hf-yeow"><p data-hf-id="hf-cvmz" class="push-repo">remote-git</p><p data-hf-id="hf-1qqe" class="push-branch">⎇ main</p></div>
+              <span data-hf-id="hf-cudd" class="clean-state">2 changed files</span>
+            </div>
+            <p data-hf-id="hf-fxpz" class="commit-label">COMMIT MESSAGE</p>
+            <p data-hf-id="hf-yo5v" class="commit-message">update remote controls</p>
+            <div data-hf-id="hf-anbc" class="push-button push-action">↑&#160; Push to remote</div>
+            <div data-hf-id="hf-cj2s" class="push-success push-result">✓&#160; Successfully pushed to origin/main</div>
+          </div>
+
+          <div data-hf-id="hf-pf87" class="outro-lockup hidden-initial">
+            <div data-hf-id="hf-umee" class="brand-lockup"><span data-hf-id="hf-hnmc" class="brand-mark">R</span><span data-hf-id="hf-2eff" class="brand-name">Remote-Git</span></div>
+            <p data-hf-id="hf-gl2v" class="privacy-line">Your repository stays yours.</p>
+            <p data-hf-id="hf-i2ec" class="final-caption">Control your code remotely.</p>
+          </div>
+        </div>
+      </section>
+
+      <audio data-hf-id="hf-fzsi" id="music-bed" src="assets/music/happy-beats-business-moves-vol-12-by-ende-dot-app.mp3" data-start="0" data-duration="27" data-track-index="10" data-volume="0.32" data-automation="{&quot;version&quot;:1,&quot;lanes&quot;:[{&quot;target&quot;:&quot;volume&quot;,&quot;points&quot;:[{&quot;t&quot;:0,&quot;v&quot;:0},{&quot;t&quot;:0.35,&quot;v&quot;:0.32},{&quot;t&quot;:26.2,&quot;v&quot;:0.32},{&quot;t&quot;:27,&quot;v&quot;:0}]}]}"></audio>
+      <audio data-hf-id="hf-893e" id="pair-tap" src="assets/sfx/interface/click_003.ogg" data-start="8.74" data-duration="0.01" data-track-index="11" data-volume="0.55"></audio>
+      <audio data-hf-id="hf-6s5i" id="diff-reveal" src="assets/sfx/impact/impactSoft_medium_001.ogg" data-start="15.2" data-duration="0.19" data-track-index="12" data-volume="0.42"></audio>
+      <audio id="commit-tap" src="assets/sfx/interface/click_003.ogg" data-start="18.55" data-duration="0.01" data-track-index="13" data-volume="0.55"></audio>
+      <audio data-hf-id="hf-wiwv" id="push-confirm" src="assets/sfx/interface/click_003.ogg" data-start="22.93" data-duration="0.01" data-track-index="14" data-volume="0.6"></audio>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      const sceneStarts = [4.8, 7.8, 10.8, 13.7, 17.4, 20.1, 23.5];
+      const sceneIds = ["scene-desk", "scene-agent", "scene-pairing", "scene-project", "scene-changes", "scene-commit", "scene-push", "scene-launch"];
+      const directions = [-1, 1, -1, 1, -1, 1, -1];
+
+      tl.fromTo("#scene-desk", { opacity: 0, scale: 1.015 }, { opacity: 1, scale: 1, duration: 0.65, ease: "power3.out" }, 0.18);
+      sceneStarts.forEach((time, index) => {
+        const outgoing = `#${sceneIds[index]}`;
+        const incoming = `#${sceneIds[index + 1]}`;
+        const direction = directions[index];
+        tl.to(outgoing, { opacity: 0, x: direction * -24, duration: 0.24, ease: "power2.in" }, time);
+        tl.fromTo(incoming, { opacity: 0, x: direction * 32, scale: 0.99 }, { opacity: 1, x: 0, scale: 1, duration: 0.42, ease: "power3.out" }, time);
+      });
+      tl.fromTo(".ambient-glow", { scale: 0.96 }, { scale: 1.04, duration: 2.8, repeat: 4, yoyo: true, ease: "sine.inOut" }, 0.3);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

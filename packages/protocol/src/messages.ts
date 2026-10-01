@@ -22,6 +22,12 @@ export type PhoneConnectedMessage = {
   type: "phone.connected";
 };
 
+export type DeviceStatusMessage = {
+  type: "device.status";
+  online: boolean;
+  requiresPairing?: boolean;
+};
+
 export type GitRepositoriesRequestMessage = {
     type: "git.repositories.request";
 };
@@ -185,6 +191,7 @@ export type Message =
   | PairSuccessMessage
   | PairFailedMessage
   | PhoneConnectedMessage
+  | DeviceStatusMessage
   | MachineInfoMessage
   | GitStatusRequestMessage
   | GitStatusResponseMessage

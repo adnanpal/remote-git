@@ -35,6 +35,9 @@ type RelayCallbacks = {
     onError: (
         message: PairFailedMessage
     ) => void;
+    onDisconnect: () => void;
+    onDeviceStatus?: (online: boolean) => void;
+    onNeedsPairing?: () => void;
 
     onGitStatus: (message: GitStatusResponseMessage) => void;
     onGitLog: (message: GitLogResponseMessage) => void;
@@ -90,6 +93,12 @@ export function connectToRelay(
 
                 case "pair.failed":
                     callbacks.onError(message);
+                    socket.close();
+                    break;
+
+                case "device.status":
+                    if (message.requiresPairing) callbacks.onNeedsPairing?.();
+                    else callbacks.onDeviceStatus?.(message.online);
                     break;
 
                 case "machine.info":
@@ -146,6 +155,7 @@ export function connectToRelay(
         console.log(
             "❌ Relay connection closed"
         );
+        callbacks.onDisconnect();
     };
 
     return {

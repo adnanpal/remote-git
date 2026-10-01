@@ -13,12 +13,17 @@ export function registerConnection(
   socket: WebSocket,
   pairingToken: string
 ) {
+  const previous = connections.get(deviceId);
+  const tokenChanged = !!previous && previous.pairingToken !== pairingToken;
+
   connections.set(deviceId, {
     socket,
     pairingToken,
+    phone: tokenChanged ? undefined : previous?.phone,
   });
 
   console.log(`🔗 Registered connection: ${deviceId}`);
+  return { tokenChanged, previousPhone: tokenChanged ? previous?.phone : undefined };
 }
 
 export function getConnection(deviceId: string) {

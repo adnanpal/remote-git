@@ -21,8 +21,11 @@ wss.on("connection", (socket) => {
             if (message.type === "agent.register") {
 
                 deviceId = message.deviceId;
-
-                registerConnection(message.deviceId, socket, message.pairingToken);
+                const { tokenChanged, previousPhone } = registerConnection(
+                    message.deviceId,
+                    socket,
+                    message.pairingToken
+                );
 
                 console.log("\n💻 Laptop registered");
                 console.log(`Device ID: ${message.deviceId}`);
@@ -37,6 +40,21 @@ wss.on("connection", (socket) => {
                         deviceId,
                     })
                 );
+
+                if (tokenChanged && previousPhone?.readyState === 1) {
+                    previousPhone.send(JSON.stringify({
+                        type: "device.status",
+                        online: true,
+                        requiresPairing: true,
+                    }));
+                    previousPhone.close(4001, "Agent restarted; pair again");
+                } else {
+                    const phone = getConnection(message.deviceId)?.phone;
+                    if (phone?.readyState === 1) {
+                        phone.send(JSON.stringify({ type: "device.status", online: true }));
+                        socket.send(JSON.stringify({ type: "phone.connected" }));
+                    }
+                }
             }
             if (message.type === "git.repositories.request") {
                 const connection = getConnectionByPhoneSocket(socket);
@@ -97,6 +115,17 @@ wss.on("connection", (socket) => {
             }
 
             if (message.type === "phone.pair") {
+                const connection = getConnection(message.deviceId);
+                if (!connection?.socket) {
+                    socket.send(
+                        JSON.stringify({
+                            type: "pair.failed",
+                            reason: "Device is offline",
+                        })
+                    );
+                    return;
+                }
+
                 const isValid = validatePairingToken(
                     message.deviceId,
                     message.pairingToken
@@ -110,19 +139,6 @@ wss.on("connection", (socket) => {
                         JSON.stringify({
                             type: "pair.failed",
                             reason: "Invalid device ID or pairing token",
-                        })
-                    );
-
-                    return;
-                }
-
-                const connection = getConnection(message.deviceId);
-
-                if (!connection) {
-                    socket.send(
-                        JSON.stringify({
-                            type: "pair.failed",
-                            reason: "Device is offline",
                         })
                     );
 
@@ -347,6 +363,10 @@ wss.on("connection", (socket) => {
 
     socket.on("close", () => {
         if (deviceId) {
+            const connection = getConnectionBySocket(socket);
+            if (connection?.phone?.readyState === 1) {
+                connection.phone.send(JSON.stringify({ type: "device.status", online: false }));
+            }
             removeConnection(deviceId,socket);
         }
         console.log("❌ Device disconnected");
