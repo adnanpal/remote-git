@@ -24,3 +24,8 @@ dist-ssr
 *.sw?
 
 pairing.png
+
+# Environment files
+.env
+.env.*
+!.env.example
