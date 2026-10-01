@@ -22,7 +22,8 @@ const pairingInfo: PairingInfo = {
   version: 1,
   deviceId,
   pairingToken,
-  relay: "ws://192.168.1.61:8080",
+  relay: process.env.REMOTE_GIT_RELAY_URL ??
+        "ws://192.168.1.61:8080",
 };
 
 const config = await loadWorkspaceConfig();
