@@ -12,21 +12,19 @@ export async function loadWorkspaceConfig() {
         return JSON.parse(data);
     }
     catch {
-        return defaultConfig;
+        return { ...defaultConfig };
     }
 }
 export async function saveWorkspaceConfig(config) {
-    await fs.mkdir(CONFIG_DIR, {
-        recursive: true,
-    });
+    await fs.mkdir(CONFIG_DIR, { recursive: true });
     await fs.writeFile(CONFIG_FILE, JSON.stringify(config, null, 2), "utf-8");
 }
-export async function getWorkspaces() {
+export async function removeWorkspace(workspacePath) {
     const config = await loadWorkspaceConfig();
-    return config.workspaces.map((workspacePath) => ({
-        name: path.basename(workspacePath),
-        path: workspacePath,
-    }));
+    const resolvedPath = path.resolve(workspacePath);
+    config.workspaces = config.workspaces.filter((workspace) => path.resolve(workspace) !== resolvedPath);
+    await saveWorkspaceConfig(config);
+    return config;
 }
 export async function addWorkspace(workspacePath) {
     const config = await loadWorkspaceConfig();
@@ -36,4 +34,11 @@ export async function addWorkspace(workspacePath) {
     }
     await saveWorkspaceConfig(config);
     return config;
+}
+export async function getWorkspaces() {
+    const config = await loadWorkspaceConfig();
+    return config.workspaces.map((workspacePath) => ({
+        name: path.basename(workspacePath),
+        path: workspacePath,
+    }));
 }

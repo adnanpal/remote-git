@@ -14,10 +14,13 @@ async function isGitRepository(directory) {
 }
 async function scanDirectory(directory, repositories) {
     if (await isGitRepository(directory)) {
-        repositories.push({
-            name: path.basename(directory),
-            path: directory,
-        });
+        const normalizedPath = path.normalize(path.resolve(directory));
+        if (!repositories.has(normalizedPath)) {
+            repositories.set(normalizedPath, {
+                name: path.basename(directory),
+                path: directory,
+            });
+        }
         // Don't scan inside a repository.
         return;
     }
@@ -46,9 +49,9 @@ async function scanDirectory(directory, repositories) {
 }
 export async function discoverRepositories() {
     const config = await loadWorkspaceConfig();
-    const repositories = [];
+    const repositories = new Map();
     for (const workspace of config.workspaces) {
         await scanDirectory(workspace, repositories);
     }
-    return repositories;
+    return Array.from(repositories.values());
 }

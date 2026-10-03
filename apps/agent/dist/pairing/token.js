@@ -1,4 +1,25 @@
 import crypto from "node:crypto";
-export function generatePairingToken() {
-    return crypto.randomBytes(32).toString("hex");
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+const remoteGitDir = path.join(os.homedir(), ".remote-git");
+const tokenPath = path.join(remoteGitDir, "pairing-token.json");
+export async function getOrCreatePairingToken() {
+    try {
+        const data = await fs.readFile(tokenPath, "utf-8");
+        const parsed = JSON.parse(data);
+        if (parsed.pairingToken) {
+            return parsed.pairingToken;
+        }
+    }
+    catch {
+        // Token doesn't exist yet. Generate one below.
+    }
+    await fs.mkdir(remoteGitDir, { recursive: true });
+    const pairingToken = crypto.randomBytes(32).toString("hex");
+    const data = {
+        pairingToken,
+    };
+    await fs.writeFile(tokenPath, JSON.stringify(data, null, 2), "utf-8");
+    return pairingToken;
 }

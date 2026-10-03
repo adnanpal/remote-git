@@ -1,14 +1,28 @@
+#!/usr/bin/env node
 import { getMachineInfo } from "./machine/machine-info.js";
 import { getOrCreateDeviceId } from "./core/config.js";
 import { connectToRelay } from "./transport/websocket.js";
-import { generatePairingToken } from "./pairing/token.js";
+import { getOrCreatePairingToken } from "./pairing/token.js";
 import type { PairingInfo } from "@remote-git/protocol";
 import { generatePairingQR } from "./pairing/qr.js";
 import fs from "node:fs/promises";
 import { addWorkspace,loadWorkspaceConfig } from "./workspace/config.js";
 import path from "node:path";
+import os from "node:os";
+import { runPairCommand,runWorkspaceCommand } from "./cli.js";
+
+const args = process.argv.slice(2);
 
 
+if (args[0] === "pair") {
+    await runPairCommand(args.includes("--open"));
+    process.exit(0);
+}
+
+if (args[0] === "workspace") {
+    await runWorkspaceCommand(args[1], args[2]);
+    process.exit(0);
+}
 
 console.log(" Remote Git Agent Starting..\n");
 
@@ -16,39 +30,42 @@ console.log("🚀 Remote Git Agent starting...\n");
 
 const machine = getMachineInfo();
 const deviceId = await getOrCreateDeviceId();
-const pairingToken = generatePairingToken();
+const pairingToken = await getOrCreatePairingToken();
 
 const pairingInfo: PairingInfo = {
   version: 1,
   deviceId,
   pairingToken,
   relay: process.env.REMOTE_GIT_RELAY_URL ??
-        "ws://192.168.1.61:8080",
+        "wss://remote-git-relay.onrender.com",
 };
 
 const config = await loadWorkspaceConfig();
 
 if (config.workspaces.length === 0) {
-  const workspace = path.resolve(process.cwd());
-
-  await addWorkspace(workspace);
-
-  console.log(`📂 Initial workspace: ${workspace}`);
+    console.log("📂 No workspaces configured.");
+    console.log(
+        '   Add one with: remote-git workspace add "C:\\Projects\\MyApp"\n'
+    );
 } else {
-  console.log("📂 Configured workspaces:");
-
-  for (const workspace of config.workspaces) {
-    console.log(`   ${workspace}`);
-  }
+    console.log("📂 Configured workspaces:");
+    for (const workspace of config.workspaces) {
+        console.log(`   ${workspace}`);
+    }
 }
 
 const qr = await generatePairingQR(pairingInfo);
 
-await fs.writeFile("pairing.png", qr);
 
-console.log("📱 Pairing QR saved to pairing.png");
+const remoteGitDir = path.join(os.homedir(), ".remote-git");
 
-console.log(`Pairing Token: ${pairingToken}`);
+await fs.mkdir(remoteGitDir, { recursive: true });
+
+const pairingPath = path.join(remoteGitDir, "pairing.png");
+
+await fs.writeFile(pairingPath, qr);
+
+console.log(`📱 Pairing QR saved to ${pairingPath}`);
 
 console.log("💻 Machine Information");
 console.log("----------------------");

@@ -19,7 +19,7 @@ export function connectToRelay(
 ) {
     
     let socket: WebSocket;
-    const RELAY_URL = process.env.REMOTE_GIT_RELAY_URL ?? "ws://localhost:8080";
+    const RELAY_URL = process.env.REMOTE_GIT_RELAY_URL ?? "wss://remote-git-relay.onrender.com";
     const connect = ()=>{
         socket = new WebSocket(RELAY_URL);
 
