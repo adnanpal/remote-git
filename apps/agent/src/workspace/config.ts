@@ -33,7 +33,21 @@ export async function saveWorkspaceConfig(
     "utf-8"
   );
 }
+export async function removeWorkspace(
+  workspacePath: string
+): Promise<WorkspaceConfig> {
+  const config = await loadWorkspaceConfig();
 
+  const resolvedPath = path.resolve(workspacePath);
+
+  config.workspaces = config.workspaces.filter(
+    (workspace) => path.resolve(workspace) !== resolvedPath
+  );
+
+  await saveWorkspaceConfig(config);
+
+  return config;
+}
 export async function addWorkspace(
   workspacePath: string
 ): Promise<WorkspaceConfig> {
