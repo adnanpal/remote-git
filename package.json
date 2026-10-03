@@ -12,10 +12,12 @@
   },
   "devDependencies": {
     "@types/node": "^26.6.3",
+    "@types/qrcode-terminal": "^0.12.2",
     "typescript": "^7.0.2"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
-    "dotenv": "^18.0.5"
+    "dotenv": "^18.0.5",
+    "qrcode-terminal": "^0.12.0"
   }
 }
