@@ -65,7 +65,7 @@ function DeviceDashboard({
     <section className="w-full max-w-md sm:max-w-xl md:max-w-3xl mx-auto px-5 sm:px-8 pt-6 md:pt-8 pb-4 animate-fade-in-up">
       <header className="flex items-center justify-between gap-4 border-b border-white/10 pb-5">
         <div className="flex items-center gap-2.5">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#39e08a] to-[#1f8f56] text-[#04140b] text-xs font-bold font-mono">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-linear-to-br from-[#39e08a] to-[#1f8f56] text-[#04140b] text-xs font-bold font-mono">
             R
           </span>
           <span className="text-sm font-semibold text-[#eef1f4]">Remote-Git</span>
@@ -112,7 +112,7 @@ function DeviceDashboard({
       </div>
 
       {error && (
-        <p className="mt-5 rounded-xl border border-[#ff6b6b]/20 bg-[#ff6b6b]/[0.06] px-4 py-3 text-sm text-[#ff8b8b]" role="alert">
+        <p className="mt-5 rounded-xl border border-[#ff6b6b]/20 bg-[#ff6b6b]/6 px-4 py-3 text-sm text-[#ff8b8b]" role="alert">
           {error}
         </p>
       )}
@@ -128,11 +128,11 @@ function DeviceDashboard({
         </div>
 
         {loading ? (
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-8 text-center text-sm text-[#8b95a1]">
+          <div className="rounded-2xl border border-white/10 bg-white/3 px-5 py-8 text-center text-sm text-[#8b95a1]">
             Loading your devices...
           </div>
         ) : devices.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-5 py-9 text-center sm:px-8">
+          <div className="rounded-2xl border border-dashed border-white/15 bg-white/2 px-5 py-9 text-center sm:px-8">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl border border-[#39e08a]/20 bg-[#39e08a]/[0.07] font-mono text-lg text-[#39e08a]">
               +
             </div>
@@ -145,28 +145,28 @@ function DeviceDashboard({
             <button
               type="button"
               onClick={onScan}
-              className="mt-5 rounded-xl border border-[#39e08a]/30 bg-[#39e08a]/[0.08] px-4 py-2.5 text-sm font-medium text-[#39e08a] transition-colors hover:bg-[#39e08a]/[0.14]"
+              className="mt-5 rounded-xl border border-[#39e08a]/30 bg-[#39e08a]/8 px-4 py-2.5 text-sm font-medium text-[#39e08a] transition-colors hover:bg-[#39e08a]/[0.14]"
             >
               Scan QR code
             </button>
           </div>
         ) : (
-          <ul className="divide-y divide-white/[0.08] overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
+          <ul className="divide-y divide-white/8 overflow-hidden rounded-2xl border border-white/10 bg-white/3">
             {devices.map((device) => {
               const isConnected = onlineDeviceIds.has(device.device_id);
               return (
                 <li
                   key={device.device_id}
-                  className="border-white/[0.08]"
+                  className="border-white/8"
                 >
                   <button
                     type="button"
                     onClick={() => onSelectDevice(device)}
                     aria-label={`Open ${deviceName(device)}, ${isConnected ? "online" : "offline"}`}
-                    className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left transition-colors hover:bg-white/[0.04] sm:px-5"
+                    className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left transition-colors hover:bg-white/4 sm:px-5"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-[#aeb6c0]">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/4 text-[#aeb6c0]">
                         <span className="h-4 w-5 rounded-sm border border-current" aria-hidden="true" />
                       </span>
                       <div className="min-w-0">
